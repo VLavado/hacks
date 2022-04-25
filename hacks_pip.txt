@@ -1,0 +1,101 @@
+Problem: How to uninstall all packages installed by pip?
+
+Solution: pip freeze | xargs pip uninstall -y
+
+##############
+
+Problem: How do specify a link to download some packager from it?
+
+Problem_description: I have the following requirements.txt file to install some packages:
+
+autoalbument
+boto3
+torch==1.8.0+cu111 -f https://download.pytorch.org/whl/torch_stable.html
+torchvision==0.9.0+cu111 -f https://download.pytorch.org/whl/torch_stable.html
+hydra-core==1.0.6
+
+However it fails when running the lines with the -f flag ...so In need to change the requirements.txt to:
+
+autoalbument
+boto3
+torch==1.8.0+cu111
+torchvision==0.9.0+cu111
+hydra-core==1.0.6
+-f https://download.pytorch.org/whl/torch_stable.html
+
+
+#################
+
+Problem: One dependency inside my requirements gives an error because It can't import a module that should have been installed in a prior line in requirements.txt
+
+Let'say I have the following package.
+
+torch==1.7.1
+torchvision==0.8.2
+timm==0.3.2
+Pillow
+blobfile
+mypy
+numpy
+pytest
+requests
+einops
+tensorboardX
+deepspeed==0.4.0
+scipy
+
+Error description:
+
+Collecting deepspeed==0.4.0
+  Using cached deepspeed-0.4.0.tar.gz (444 kB)
+  Preparing metadata (setup.py) ... error
+  ERROR: Command errored out with exit status 1:
+   command: /home/victor/proyectos/roof_segmentation/beit/unilm/beit/venv/bin/python -c 'import io, os, sys, setuptools, tokenize; sys.argv[0] = '"'"'/tmp/pip-install-eb3h0agu/deepspeed_0b1f5183e7c343898a83365eb9262b3c/setup.py'"'"'; __file__='"'"'/tmp/pip-install-eb3h0agu/deepspeed_0b1f5183e7c343898a83365eb9262b3c/setup.py'"'"';f = getattr(tokenize, '"'"'open'"'"', open)(__file__) if os.path.exists(__file__) else io.StringIO('"'"'from setuptools import setup; setup()'"'"');code = f.read().replace('"'"'\r\n'"'"', '"'"'\n'"'"');f.close();exec(compile(code, __file__, '"'"'exec'"'"'))' egg_info --egg-base /tmp/pip-pip-egg-info-julj_cw9
+       cwd: /tmp/pip-install-eb3h0agu/deepspeed_0b1f5183e7c343898a83365eb9262b3c/
+  Complete output (12 lines):
+  Traceback (most recent call last):
+    File "/tmp/pip-install-eb3h0agu/deepspeed_0b1f5183e7c343898a83365eb9262b3c/setup.py", line 26, in <module>
+      import torch
+  ModuleNotFoundError: No module named 'torch'
+  
+
+Solution: The dependency deepspeed==0.4.0 needs torch to be already installed! Even though torch==1.7.1 is located before deepspeed==0.4.0 this does mean it is ALREADY installed.
+To solve the problem just do on your terminal:
+
+pip install torch==1.7.1 
+
+And once this is completed finish with:
+
+pip install -r requirements.txt
+
+deepspeed==0.4.0 will be installed without any problems :)
+
+
+######################
+
+Problem: I want to update to the latest version all dependencies in my requirements.txt. How can I do it?
+
+Solution: 
+
+This is my requirements.txt
+
+boto3
+pytorch-lightning
+tensorboard
+albumentations
+torchvision
+tqdm
+scikit-learn
+timm
+scikit-image
+seaborn
+torchmetrics
+fiftyone
+einops
+dl_training_utils
+
+This is how i do it :)
+
+pip install -U -r requirements.txt
+
+You get the latest version of these dependencies !!

@@ -1,0 +1,48 @@
+problem: I have very long json file displayed on one line. But I want it to be displayed beautifully, how can I do it?
+
+solution: ctrl + alt + l on pycharm
+
+##########################################
+
+problem: How the FUCK looks a .json file that I want to load in python?
+
+Solution: Look at the example below that has a several data types:
+
+{"name":"Victor", "age":29, "awesome":true}
+
+##########################################
+
+problem: How the FUCK you know the difference between json.load() and json.loads()?
+
+Solution: The "s" stands for string. The json.loads function does not take the path to a json file, but the file content of the json file as a string
+
+Examples:
+
+#json.load()
+#open a json file for reading
+json.load(open('/xyz/data.json'))
+
+#json.loads()
+#open a json file for reading
+json.loads(open('/xyz/data.json'))
+
+TypeError: expected string or buffer
+
+#json.loads()
+json.loads(open('/xyz/data.json').read()) #With .read() you get a string
+
+#json.load()
+json.load(open('/xyz/data.json').read())
+
+AttributeError: 'str' object has no attribute read
+
+
+You can rewrite the code this way if you prefer!!
+
+with open('/xyz/data.json', 'r') as fout:
+    json.load(fout)
+    
+with open('/xyz/data.json', 'r') as fout:
+    json.loads(fout.read())
+
+

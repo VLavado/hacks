@@ -1,0 +1,46 @@
+Problem: What is the difference between __init__ and __call__ methods?
+
+Solution: The first is used to initialise newly created objects, and receives arguments used to do that
+
+#######
+
+class Foo:
+
+    def __init__(self, a, b, c):
+        #...
+        
+x = Foo(1, 2, 3) # __init__
+
+#######
+
+The second implements function call operator:
+
+#######
+
+class Foo:
+    def __call__(self, a, b, c):
+        # ...
+        
+x = Foo()
+x(1, 2, 3) # __call__
+
+#######
+
+Another example!!
+
+#######
+
+class A:
+    def __init__(self):
+        print('init')
+        
+    def __call__(self):
+        print('call')
+        
+a = A()
+init
+
+a()
+call
+
+#######

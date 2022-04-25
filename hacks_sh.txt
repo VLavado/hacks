@@ -1,0 +1,71 @@
+Problem: what the fuck does "|" mean in a shell script?
+
+Solution: | is called a pipe, and it allows to concatenate operations from left to right.
+
+The syntax is something like:
+
+command1 | command2 | command3 ...
+
+Some examples:
+
+ls -la | grep under
+
+list all files and then filter those that have under in its name
+
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${NONPROD_ECR}
+
+login to aws ecr and then use the string response you get to login in docker hub
+
+${NONPROD_ECR} is just an enviromental vairable defined before to point to the repository where our Docker images are stored
+
+
+#############################################
+
+
+Problem: How the fuck do you implement a symlink a.k.a. soft symbolic link a.k.a acceso directo entre dos archivos/carpetas?
+
+Solution: Easy bro
+
+The syntax is simple:
+
+ln [-sf] [source] [destination]
+
+By default, the ln command creates a hard link.
+Use the -s option to create a soft (symbolic) link.
+The -f option will force the command to overwrite a file that already exists.
+Source is the file or directory being linked to.
+Destination is the location to save the link – if this is left blank, the symlink is stored in the current working directory.
+
+
+Some examples:
+
+
+To create a symlink between to folders:
+
+$ln -s /media/victor/851aa2dd-6b93-4a57-8100-b5253aa4eedd/SAR/Etna_example sar_data
+
+To create a symlink between files: 
+$ln -s /media/victor/851aa2dd-6b93-4a57-8100-b5253aa4eedd/SAR/Etna_example/source_file.txt sar_data/destination_file.txt
+
+
+##############################################
+
+
+Problem: How the HECK do I search for a directory (a.k.a folder) on linux?
+
+
+Solution: You can use find command. To do it you have to be positioned on the parent directory where you think the directory will be:
+
+~$find / -type d -name "isce2"
+
+You will look in the current directory and all its subdirectory for any directory called "isce2"
+
+
+#############################################
+
+
+Problem: How the HECK do I unzip all .zip files in a certain directory?
+
+Solution: Easy peasy
+
+$unzip "*.zip" 

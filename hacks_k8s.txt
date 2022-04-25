@@ -1,0 +1,431 @@
+Problem: What the HECK is a k8s cluster?
+
+Solution: k8s coordinates a highly available cluster of computers that are connected to work as a single unit. The abstraction in k8s allow you to deploy containerized applications to a cluster without
+tying them specifically to individual machines. To make use of this new model of deployment, applications need to be packaged in a way that decouples them from individual hosts: they need to be 
+containerized. Containerized applications are more flexible and available than in past deployment models, where applications were installed directly onto specific machines as packages deeply integrated
+into the host. K8s automates the distribution and scheduling of application containers across a cluster in a more efficient way. K8s is an open-source platform and is production-ready. 
+
+K8s cluster consists on two types of resources:
+
+-The control plane, that coordinates the cluster
+-Nodes, which are the workers that run applications
+
+
+
+################################################################
+
+
+
+Problem: How the heck do you set up an EKS cluster? Or in other other words, how the heck do you set up a k8s cluster using aws?
+
+Statement: Use Elastic Kubernetes Service (EKS) applying AWS command line interface and console, using command line utilities like eksctl and kubectl to launch an EKS cluster, provision a Kubernetes deployment and pod running instances of nginx, and create a LoadBalancer service to expose your application over the internet.
+
+Files can be found here: https://github.com/ACloudGuru-Resources/Course_EKS-Basics
+
+Solution:
+
+
+
+1) Before you can set-up an EKS cluster you will need to create a user with admin-privilegies so that I can use cloudformation, create VPC, EC2 instances, security groups. To do that:
+
+
+
+1.1 Go to IAM, create a new user and click on attach existing policies to the user (k8-admin). I want to select "AdministratorAccess"
+1.2 Paste access key ID: AKIAZBKFHQ2KX2V64YFG and Secret Access Key: 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 as will need them later
+
+
+
+2) Launch an EC2 instance and configure the command line tools: eksctl and kubectl.
+
+
+
+2.1 Make sure I am in the N.Virginia Region
+2.2 Create an EC2 instance, t2 micro will be okay, then on the configure instance details step select in the auto assign public ip field the enabled option. This ensures that the EC2 instnace will have access
+    from the internet.
+2.3 Once you click on review and launch the instance make sure you generate the key par to connect using ssh.
+2.4 Connect to the EC2 instnace any way you want either via terminal or via console. We can try using the browser connection provided in the aws console, and I get an interactive terminal session on my browser.
+2.5 This instance will work as our admin-workstation. We will use it to run our administrative commands from here.
+2.6 Check what aws command line interfeace or aws cli is installed.
+
+$aws --version #if the version is 1.xx.xxx you need to upload it
+$curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" #download version 2 of aws cli using curl command and then write it into file awscliv2.zip
+$unzip awscliv2.zip
+$which aws #find out where my aws cli is installed it outputs /usr/bin/aws
+$sudo ./aws/install --bin-dir /usr/bin --install-dir /usr/bin/aws-cli --update #To upgrade aws cli
+$ aws --version #Now outputs version 2.xx.xxx
+
+2.7 Now I want to configure the command line interface, and this is why we need the access key and the secrete access key for our IAM k8-admin that we downloaded just before
+
+$aws configure
+# complete the requested field as follows
+AWS Access Key ID [None]: AKIAZBKFHQ2KX2V64YFG                                                         
+AWS Secret Access Key [None]: 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
+Default region name [None]: us-east-1
+Default output format [None]: json
+
+2.8 Now I want to install kubectl
+
+$ curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.16.8/2020-04-16/bin/linux/amd64/kubectl download the binary
+$ chmod +x ./kubectl #add execute permissions to the binary
+$ mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin #copy the binary to a directory in my path
+$ kubectl version --short --client #ensure kubectl is installed
+
+2.9 And finally I want to install eksctl:
+
+$ curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp #download the binary
+$ sudo mv /tmp/eksctl /usr/bin # move the extracted binary to /usr/bin (where we installed aws)
+$ eksctl version # get the version of eksctl
+
+*Note: eksctl is a tool that allows to create, update and get information about your eks cluster
+
+
+
+3) Provisioning an EKS cluster
+
+
+
+3.1
+$eksctl create cluster --name new-dev --version 1.21 --region us-east-1 --nodegroup-name standard-workers --node-type t3.micro --nodes 3 --nodes-min 1 --nodes-max 4 --managed
+# This commnad creates a cluster whose name is dev, with version 1.21, in us-east-1 region, node group name is standard workers, the type of nodes are t3.micro, we specify the minimum and maximum number of 
+# nodes and the worker nodes are going to be managed.
+
+*Note: a node is a VM or a physical computer that serves as a worker machine in k8s cluster. Each node has a Kubelet, which is an agent for managing the node and communicating with the control plane. The
+node should also have tools for handling container operations, such as Docker. A Kubernetes cluster that handles production traffic should have a minimum of three nodes because if one node goes down, 
+both an etcd member and a control plane instance are lost, and redundancy is compromised.
+
+
+# All these resources are created using Cloudformation in the background
+
+*Note: Sometimes the creation of the cluster fails because, there are not enough resources in the availability zones to provide you with the cluster. If that's the case just wait for the rollback in 
+cloudformation to be completed and then just launch the command again
+
+# After the command has finished running you will see in the cloudformation stacks that the are two!! One is called eksctl-new-dev-cluster for the control plane and the other one 
+# eksctl-new-dev-nodegroup-standard-workers for the workers/nodes 
+
+*Note: the control plane is responsible for managing the cluster. It coordinates all activities in your cluster, such as scheduling applications, mantaining aplications desired state, scaling applications
+and rolling out new updates.
+
+
+3.2 Go to eks in aws console and selec your cluster. In the configuration > compute > you can see your node workers and check their type and k8s version. You can also check networking and loggin sections
+
+*Note we are going to communicate with the control plane using kubectl
+
+3.3 Back in to our admin workstation
+$eksctl get cluster #Displays some info about our cluster
+$aws eks update-kubeconfig --name new-dev --region us-east-1 #this command configures kubectl so that it can connect it to our eks cluster
+
+
+
+4) Installing and running an application on my eks cluster
+
+
+
+# This will consist on creating load balancer, our 3 pods and our deployment (of the app in the cluster)
+
+4.1 We get the configuration to do that from a configuration file which is in a github repository
+$sudo yum install -y git
+$git clone https://github.com/ACloudGuru-Resources/Course_EKS-Basics 
+
+4.2 Once we are inside the directory of the repo we can see there are two **yaml** files to configure our deployment and our services.
+
+# deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    env: dev
+spec:
+  replicas: 3 #number of pods
+  selector:
+    matchLabels:
+      env: dev
+  template:
+    metadata:
+      labels:
+        env: dev
+    spec:
+      containers:
+      - name: nginx
+        image: nginx #Docker image name
+        ports:
+        - containerPort: 80
+        
+
+# configuration of loadbalancer service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+  labels:
+    env: dev
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+  selector:
+    env: dev
+    
+
+# It is better to first create the service and then the deployment. In other words we create the load balancer first, and then we create the corresponding backend workflows (pods, deployment, ...etc)
+
+# The reason for this is because when k8s creates a pod, it is done using some enviromental variables. Those enviromental variable will be pointing to the services that were running when the pods were 
+# created. 
+
+#      <<<<<< Any service a pod needs to access, should be created before the pod is created >>>>>>>>
+
+
+
+*Note: what is a service? it is an abstraction that allows to expose an application runnig on a set of pods as a network service. For example let's consider I have a processing backend which is running
+with 3 replicas. Those replicas are fungible, frontends do not care which backend they use. While the actual pods that compose the backend set may change, the frontend clients should not need to be aware
+of that, nor should they need to keep track of the set of backend themselves.
+The service abstraction enables this decoupling.
+You can check more information about services here: https://kubernetes.io/docs/concepts/services-networking/service/
+
+
+4.3 Run the load balancer service
+
+$kubectl apply -f ./ngnix-svc.yaml
+$kubectl get service #To check the service
+
+4.4 Configure the deployment of the pods and our application running in them
+
+*Note: When you deploy applications on k8s, you tell the control plane to start the application containers. The control plane schedules the containers to run on the cluster's node. The nodes communicate
+with the control plane using the k8s api, which the control plane exposes. End users can also use the k8s api directly to interact with the cluster.
+
+$kubectl apply -f ./ngnix-deployment.yaml
+$kubectl get deployment #To check the deployment
+
+NAME         TYPE           CLUSTER-IP     EXTERNAL-IP                                                               PORT(S)        AGE
+kubernetes   ClusterIP      10.100.0.1     <none>                                                                    443/TCP        48m
+nginx-svc    LoadBalancer   10.100.215.5   a6d99e96d86f94b70be42ad38b43c0b8-1899064870.us-east-1.elb.amazonaws.com   80:32052/TCP   81s
+
+# You will see something like this
+
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   3/3     3            3           71s
+
+$kubectl get pod # To see the pods
+NAME                               READY   STATUS    RESTARTS   AGE
+nginx-deployment-75ffc6d4d-5v7hj   1/1     Running   0          2m6s
+nginx-deployment-75ffc6d4d-86c8x   1/1     Running   0          2m6s
+nginx-deployment-75ffc6d4d-h85ns   1/1     Running   0          2m6s
+
+
+$kubectl get rs # To check the replica sets
+NAME                         DESIRED   CURRENT   READY   AGE
+nginx-deployment-75ffc6d4d   3         3         3       3m13s
+
+$kubectl get node #To check the instances
+NAME                             STATUS   ROLES    AGE   VERSION
+ip-192-168-24-164.ec2.internal   Ready    <none>   46m   v1.21.5-eks-9017834
+ip-192-168-25-241.ec2.internal   Ready    <none>   46m   v1.21.5-eks-9017834
+ip-192-168-57-165.ec2.internal   Ready    <none>   46m   v1.21.5-eks-9017834
+
+4.5 Access our application
+
+# We access our application through the load balancer. Because it is the load balancer which exposes our application to the internet.
+# We do it with a curl command that points to the dns (external ip) of our load balancer
+
+$curl "a6d99e96d86f94b70be42ad38b43c0b8-1899064870.us-east-1.elb.amazonaws.com" 
+
+#This will display the ngnix screen which the index.html 
+
+#You can also access the web page through the browser by pasting
+a6d99e96d86f94b70be42ad38b43c0b8-1899064870.us-east-1.elb.amazonaws.com
+
+
+
+5) Explore the high availability feature 
+
+# Stop the 3 nodes in the ec2 console and check the corresponding nodes and pods
+$kubectl get node
+$kubectl get pods
+
+# They will show that right after you stopped the instance there are no pods and nodes running....
+# However, once you wait a moment you will see the nodes and the pods are up again !!!!
+
+# That's the magic of k8s: the orchestration of resources work to achieve the desired state which is 3 nodes running even though we shut them down.
+
+
+##########################################################
+
+Problem: How the HECK do I learn some cool kubectl commands?
+
+
+Solution: By performing some nice tasks that I describe before and then I run with code!!!
+
+Situation: there is an already running k8s cluster and as the manager of cluster operations you are in charge of the following tasks:
+
+1) Get persistent volumes in the cluster sorted by capacity and save that list to a file
+2) Run a command inside a pod's (named quark in the namespace of the cluster which which is beebox-mobile) container to retrieve the contents of a file that is on that containers file system and save that 
+data to a file
+3) Create a deployment using an existing deployment spec file
+4) Delete an object: the BeeBox service object called beebox-auth-svc
+
+1) # start by listing the persistent volumes.
+
+*Note: persistent volume (pv) is a piece of storage in the cluster that has been provisioned. It is a resource in the cluster just like a node is a cluster resource.
+
+$kubectl get pv
+
+NAME         CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   REASON   AGE
+audit-logs   2Gi        RWO            Retain           Available           manual                  33m
+pv0002       1Gi        RWO            Retain           Available           manual                  33m
+pv0003       3Gi        RWO            Retain           Available           manual                  33m
+
+
+
+# They are not listed by volume capacity!!
+
+$kubectl get pv -o yaml # I store the output in yaml format
+
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"PersistentVolume","metadata":{"annotations":{},"name":"audit-logs"},"spec":{"accessModes":["ReadWriteOnce"],"capacity":{"storage":"2Gi"},"hostPath":{"path":"/mnt/data2"},"storageClassName":"manual"}}
+    creationTimestamp: "2022-03-04T13:33:54Z"
+    finalizers:
+    - kubernetes.io/pv-protection
+    name: audit-logs
+    resourceVersion: "621"
+    uid: 7d6a641a-0306-409f-be1e-21bd388c3c73
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 2Gi
+    hostPath:
+      path: /mnt/data2
+      type: ""
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: manual
+    volumeMode: Filesystem
+  status:
+    phase: Available
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"PersistentVolume","metadata":{"annotations":{},"name":"pv0002"},"spec":{"accessModes":["ReadWriteOnce"],"capacity":{"storage":"1Gi"},"hostPath":{"path":"/mnt/data1"},"storageClassName":"manual"}}
+    creationTimestamp: "2022-03-04T13:33:53Z"
+    finalizers:
+    - kubernetes.io/pv-protection
+    name: pv0002
+    resourceVersion: "619"
+    uid: b46dbc48-0d50-48bd-81ad-44b9a3276ff3
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 1Gi
+    hostPath:
+      path: /mnt/data1
+      type: ""
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: manual
+    volumeMode: Filesystem
+  status:
+    phase: Available
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"PersistentVolume","metadata":{"annotations":{},"name":"pv0003"},"spec":{"accessModes":["ReadWriteOnce"],"capacity":{"storage":"3Gi"},"hostPath":{"path":"/mnt/data3"},"storageClassName":"manual"}}
+    creationTimestamp: "2022-03-04T13:33:54Z"
+    finalizers:
+    - kubernetes.io/pv-protection
+    name: pv0003
+    resourceVersion: "635"
+    uid: ed6eb0b8-9181-4b5c-9d36-469d5a20d1e6
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    capacity:
+      storage: 3Gi
+    hostPath:
+      path: /mnt/data3
+      type: ""
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: manual
+    volumeMode: Filesystem
+  status:
+    phase: Available
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""
+  
+# You can see that capacity is under spec field
+
+$ kubectl get pv --sort-by=.spec.capacity.storage
+NAME         CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM   STORAGECLASS   REASON   AGE
+pv0002       1Gi        RWO            Retain           Available           manual                  39m
+audit-logs   2Gi        RWO            Retain           Available           manual                  39m
+pv0003       3Gi        RWO            Retain           Available           manual                  39m
+
+# Now to write that to a file
+$kubectl get pv --sort-by=.spec.capacity.storage > home/cloud_user/pv_list.txt
+
+2) 
+$kubectl exec quark -n beebox-mobile -- cat /etc/key/key.txt
+
+# the pod is quark and its namespace is beebox-mobile
+
+1267aa45
+
+
+# To write it to a file
+
+$kubectl exec quark -n beebox-mobile -- cat /etc/key/key.txt > /home/cloud_user/key.txt
+
+
+3) 
+$kubectl apply -f deployment.yml
+$kubectl get deployments -n beebox-mobile
+#Do this to check the deploymets in the beebox-mobile namespace
+
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment   3/3     3            3           2m19s
+
+$ kubectl get pods -n beebox-mobile
+
+NAME                               READY   STATUS    RESTARTS   AGE
+nginx-deployment-89fc5f857-974jj   1/1     Running   0          3m20s
+nginx-deployment-89fc5f857-kpz8r   1/1     Running   0          3m20s
+nginx-deployment-89fc5f857-s9c8q   1/1     Running   0          3m20s
+quark                              1/1     Running   0          15m
+
+4)
+$kubectl delete service beebox-auth-svc -n beebox-mobile
+# because I want to delete a service I use kubectl delete service
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

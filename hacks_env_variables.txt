@@ -1,0 +1,51 @@
+Question: What does PYTHONPATH enviroment variable do?
+
+Answer: The PYTHONPATH variable has a value that is a string with a list of directories that Python should add to the sys.path directory
+list.
+
+So...what is sys.path?
+
+Python has a simple algorithm for finding a module with a given name, such as "a_module". It looks for a file called "a_module.py" in the
+directories listed in the variable sys.path
+
+See the following code
+
+###### code ######
+
+>>> import sys
+>>> type(sys.path)
+<class 'list'>
+>>> for path in sys.path:
+...     print(path)
+... 
+/Users/brettmz-admin/dev_trees/psych-214-fall-2016/sphinxext
+/usr/local/Cellar/python/3.7.2_1/Frameworks/Python.framework/Versions/3.7/lib/python37.zip
+/usr/local/Cellar/python/3.7.2_1/Frameworks/Python.framework/Versions/3.7/lib/python3.7
+/usr/local/Cellar/python/3.7.2_1/Frameworks/Python.framework/Versions/3.7/lib/python3.7/lib-dynload
+/Users/brettmz-admin/Library/Python/3.7/lib/python/site-packages
+/Users/brettmz-admin/dev_trees/grin
+/Users/brettmz-admin/dev_trees/rmdex
+/usr/local/lib/python3.7/site-packages
+
+####### end code ######
+
+The a_module.py file is in the code directory, and this directory is not in the sys.path list
+
+Because sys.path is just a Python list, like any other, we can make the import work by appending the code directory to the list.
+
+###### code ######
+
+>>> import sys
+>>> sys.path.append('code')
+>>> # Now the import will work
+>>> import a_module
+
+####### end code ######
+
+There are various ways of making sure a directory is always on the Python sys.path list when you run Python, including:
+
+- Put the directory into the contents of the PYTHONPATH enviroment variable
+- Make the module part of an installable package, and install it.
+
+To sum up: the main use of PYTHONPATH is when we are developing some code that we want to able to import from Python, but that we have not
+yet made into an installable Python package 

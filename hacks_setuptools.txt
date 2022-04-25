@@ -1,0 +1,5 @@
+Problem description: 
+
+When you have worked on writing the documention with the classes/functions of your library you need to include the following field in setuptools.py module
+
+package_data = [typed.py]

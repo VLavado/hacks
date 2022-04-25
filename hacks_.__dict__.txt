@@ -1,0 +1,35 @@
+Problem: What the heck is the method .__dict__ ?
+
+
+Solution:  According to python documentation object.__dict__ is A dictionary or other mapping object used to store an object’s (writable) attributes.
+Remember, everything is an object in Python. When I say everything, I mean everything like functions, classes, objects etc 
+
+Example:
+
+I want to create a model using an instance from VisionTransformer class in visualize_attention.py
+
+#### visualize_attention.py #####
+
+import vision_transformer as vits # Here vision_transformer is a module with classes and functions inside it
+
+model = vits.__dict__[args.arch](img_size=[512], patch_size=args.patch_size, num_classes=0)
+
+#### end of code ################
+
+What happens here is that I call a function inside vision_transformer module using model = vits.__dict__[args.arch], and args.arch is maybe a "vit_tiny" string. Therefore, I am effectively calling the
+vit_tiny function.
+
+def vit_tiny(patch_size=16, **kwargs):
+    model = VisionTransformer(
+        patch_size=patch_size, embed_dim=192, depth=12, num_heads=3, mlp_ratio=4,
+        qkv_bias=True, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+    return model
+
+The parenthesis are just the arguments I am passing for the function. To sum up, what the code is doing is:
+
+model = vit_tiny(img_size=[512], patch_size=args.patch_size, num_classes=0) = vits.__dict__[args.arch](img_size=[512], patch_size=args.patch_size, num_classes=0)
+
+
+
+ 
+

@@ -1,0 +1,13 @@
+Problem: How the HECK do you avoid overwriting between existing java versions?
+
+Solution: Don't worry, "apt-get" used to install versions of java version won't overwrite them.
+
+You can switch between installed java versions, use the update-java-alternatives command.
+
+$update-java-alternatives --list
+
+Set a certain java version as default (needs root permissions)
+
+$sudo update-java-alternatives --set /path/to/java/version
+
+...where /path/to/java/version is one of those listed by the previous command (e.g. /usr/lib/jvm/java-7-openjdk-amd64).

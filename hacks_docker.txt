@@ -1,0 +1,538 @@
+Problem: How the FUCK can I refresh some basic docker operations that have a real application?
+
+Statement: We have some infrastructure available where we want to deploy a web server that uses apache and some cool html templates. 
+
+To do it we want to use Docker.
+
+We can and will leverage an existing Docker image to build our web template. We can modify its code and then copy it to our container, however it is more efficient to modify it and then integrate it into a new Docker image.
+Let's see how it is done:
+
+Solution:
+
+####### code ###########
+
+# first we pull our base image
+$docker pull httpd:2.4
+
+# run the docker in detached mode and name it webtemplate
+$docker run --name webtemplate -d httpd:2.4
+
+# run an interactive bash terminal inside the already running docker container
+$docker exec -it webtemplate bash
+
+# update apt package manager and install git inside the container
+@container_id$apt update && apt install git
+
+# after finishing the installation clone a git repository inside a specific path of the container in order to get the code available for the web page
+@container_id$git clone https://github.com/linuxacademy/content-widget-factory-inc.git /tmp/widget-factory-inc
+
+# exit the container
+@container_id$exit
+
+# get some information about the running container
+$docker ps
+
+# create a new Docker image from the updated code using the container id: 43770698c65d, with repository name: example/widgetfactory and tag:v1
+$docker commit 43770698c65d example/widgetfactory:v1
+
+# check some information about both Docker images. The base image and the newly created example/widgetfactory:v1
+$docker images
+
+# The new example/widgetfactory:v1 is quite large compared to the base image. So we want to generate a more lightweight docker image. We start by running an interactive bash inside the container
+$docker exec -it webtemplate bash
+
+# We get rid of git, the dependencies installed along git as well as all cached files from installed packages
+@container_id$apt remove git -y && apt autoremove -y && apt clean -y
+@container_id$exit
+
+# create a new lightweight Docker image from the updated code using the container id: 43770698c65d, with repository name: example/widgetfactory and tag:v2
+$docker commit 43770698c65d example/widgetfactory:v2
+
+# remove the previous image and the base image as they are not longer needed
+$docker rmi example/widgetfactory:v1
+$docker rmi httpd:2.4
+
+# let's run 3 container mapping to sequential ports in the web server (and port 80 in the container) to serve the web!! They are all going to use the lightweight docker image
+$docker run -d --name web1 -p 8081:80 example/widgetfactory:v2
+$docker run -d --name web2 -p 8082:80 example/widgetfactory:v2
+$docker run -d --name web3 -p 8083:80 example/widgetfactory:v2
+
+# connect to the web page using your browser. To do that just past in your browser the public ip of the server and then its corresponding port!!
+To be served the web by container web1 <public_ip>:8081
+To be served the web by container web2 <public_ip>:8082
+To be served the web by container web3 <public_ip>:8083
+
+
+################# end code ##############################
+
+#########################################################
+
+
+
+Problem: How the FUCK do I dockerize a flask application?
+
+
+Statement: In the question above, I have dockerized static content using httpd static web server. But now I want to dockerize a dynamic web site that uses flask (wsgi) and python in a micro service 
+framework. Let's do this cool shit !!!
+
+*Note: wsgi stands for web server gatewat interface
+
+My company has a Flask application that allows employees to store notes about current projects. Its name is notesapp. Currently, the app is running on a central server, however you have been tasked to
+dockerize for easier deployment and maintenance.
+
+Solution: These are the steps you want to follow to Dockerize the application:
+
+1) Create the build files: To start this transition to Docker we need to write some configuration code: Dockerfile, .dockerignore file to build a clean Image.
+
+2) Build and setup enviroment: build the first image version and then use a container from that image to set up the database of the app.
+
+3) Run, Evaluate and Upgrade: run the application and watch the logs to ensure everything is working. Fix warning and rebuild.
+
+4) Upgrande Flask to be production ready: Flask warns that it should not be used in production, so let's upgrade it to a production ready wsgi: Gunicorn
+
+5) Build a production Image: once the server is upgraded, build a production image and run the container again.
+
+
+
+
+################ code ####################
+
+
+1)
+
+# The first step to dockerize the flask app is to understand the code already existing in the central server
+
+# we explore the code in notes directory doing $ls -la
+
+total 40
+drwxr-xr-x. 4 cloud_user cloud_user   155 Mar  8 00:06 .
+drwx------. 5 cloud_user cloud_user   153 Mar  8 00:06 ..
+-rw-r--r--. 1 cloud_user cloud_user   422 Mar  8 00:06 config.py
+-rw-r--r--. 1 cloud_user cloud_user   185 Mar  8 00:06 .env
+-rw-r--r--. 1 cloud_user cloud_user  1347 Mar  8 00:06 .gitignore
+-rw-r--r--. 1 cloud_user cloud_user  5087 Mar  8 00:06 __init__.py
+-rw-r--r--. 1 cloud_user cloud_user   971 Mar  8 00:06 models.py
+-rw-r--r--. 1 cloud_user cloud_user   226 Mar  8 00:06 Pipfile
+-rw-r--r--. 1 cloud_user cloud_user 10219 Mar  8 00:06 Pipfile.lock
+drwxr-xr-x. 2 cloud_user cloud_user   124 Mar  8 00:06 static
+drwxr-xr-x. 2 cloud_user cloud_user   165 Mar  8 00:06 templates
+
+# .gitignore tells us they are using git for version control in the app
+# Pipfile tells us they are using pipenv for managing the dependencies for the app
+
+# let's see what's in config.py to check what else in configured for the application:
+
+$cat config.py
+
+import os
+
+db_host = os.environ.get('DB_HOST', default='localhost')
+db_name = os.environ.get('DB_NAME', default='notes')
+db_user = os.environ.get('DB_USERNAME', default='notes')
+db_password = os.environ.get('DB_PASSWORD', default='')
+db_port = os.environ.get('DB_PORT', default='5432')
+
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+SQLALCHEMY_DATABASE_URI = f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+
+# We can see the app uses enviroment variables such as DB_HOST, DB_NAME, DB_USERNAME...
+# But also it includes sqlalchemy. Sqlaclchemy is a tool for managing the configuration of databases.
+# It requires a migration directory to store its configuration state. We don't currently have a migration just yet in our notesapp, but we will later when we have sqlalchemy configured our database.
+
+# To sum up we can see there is a lot of app code, but a lot of configuration files. These configuration files, don't really belong in the Image. Docker provides a way of excluding specific files and folder
+# for our image -> .dockerignore
+
+# Let's create our .dockerignore
+
+$ vim .dockerignore
+
+.dockerignore
+Dockerfile
+.gitignore
+Pipfile.lock
+migrations/
+
+# we exclude the own .dockerignore of the docker image, because it does not belong to the app code
+# The same happens with Dockerfile and .gitignore
+# Pipfile.lock is excluded as it just manages the dependices of the app, but not the app itself
+# We also want to exclude migrations at this will be created to store the configuration of the db by sqlalchemy 
+
+
+# Now we with .dockerignore file we can create cleaner Docker image
+
+###########################Docker file starts here ############################
+
+$vim Dockerfile
+
+FROM python:3 #Flask is a python application, so this will give us the latest python 3 version to run our application
+ #we need to pull in the dependencies the app requires, we can do that using pipenv. Let's set up the env variables we will need for that
+ENV PYBASE /pybase #we define an enviromental variable called PYBASE with value /pybase, which is where pipenv will install all dependencies
+ENV PYTHONUSERBASE $PYBASE
+ENV PATH $PYBASE/bin:$PATH # we will add the pybase/bin folder to our current PATH env variable -> This is achieved by using the colon and then $PATH afterwards
+RUN pip install pipenv # We need to install pipenv using pip that already comens installed with Docker
+
+# let's grab the pip file from our notes app and put it on our working directory.
+# we will set the working directory as /tmp because we won't keep the pip file around
+
+WORKDIR /tmp
+COPY Pipfile . #Copy pipfile from our current directory in the server which is /notes to our Image workdir which is /tmp
+RUN pipenv lock #We need to generate Pipfile.lock which is the file that pipenv uses to determine which dependencies to install
+
+
+# Now we install the dependencies using pipenv. For that we use some env variables to control the process.PIP_USER=1 tells pipenv to install the dependencies into the user
+# directory that we specified above in PYTHONUSERBASE. PIP_IGNORE_INSTALLED=1 this tells pipenv to ignore the install system libraries and go ahead and install all our dependencies in our
+# user folder
+# The -d flag tells pipenv to grab our dev dependencies
+# --system flag to have pipenv installed to our user directory rather than a virtual enviroment
+# --ignore-pipfile flag to tell pipenv not to compare pipfile with pipfile.lock and make sure they are in sync. But since we have just generated pipfile.lock we don't need to do this comparison
+
+
+RUN PIP_USER=1 PIP_IGNORE_INSTALLED=1 pipenv install -d --system --ignore-pipfile
+
+
+
+#Now that all are dependencies are installed we can copy our app into the image
+
+
+
+COPY . /app/notes #Copy everything, except the config files that we specified in our .dockerignore file, into our /app/notes directory. That's where our app will reside inside our Image
+WORKDIR /app/notes #Change the working directory to match where we just put our app
+EXPOSE 80 #We will allow the host to talk to the container on port 80
+# We tell what command to run. We want to run the flask command. Flask has a "run" command which will start the server. "--port80" we want flask to run in the port 80 of the container. 
+#"--host=0.0.0.0" allows to accept connections from everywhere. Will all that we start the app itself.
+
+CMD["flask", "run", "--port=80", "--host=0.0.0.0"] #This is the CMD exec form equivalent to $flask run --port=80 --host=0.0.0.0
+
+
+
+#######Dockerfile ends here ################
+
+*Note: The main purpose of CMD is to provide defaults for an **executing container!!!** While RUN is used to build the Docker Image, and it is generally applied to manage dependencies needed for the app or
+processes.
+
+*Note2: There can be only one CMD instruction in the Dockerfile. If you list more, only the last one will take effect.
+
+*Note3: CMD has three forms
+
+CMD ["executable","param1","param2"] (exec form, this is the preferred form)
+CMD ["param1","param2"] (as default parameters to ENTRYPOINT)
+CMD command param1 param2 (shell form)
+
+If you use the second form, then CMD is used to provide arguments for the ENTRYPOINT instruction, in which case both CMD and ENTRYPOINT instruction should be specified with the JSON array format
+
+
+#Short version of the Dockerfile
+
+FROM python:3
+ENV PYBASE /pybase
+ENV PYTHONUSERBASE $PYBASE
+ENV PATH $PYBASE/bin:$PATH
+RUN pip install pipenv
+
+WORKDIR /tmp
+COPY Pipfile .
+RUN pipenv lock
+RUN PIP_USER=1 PIP_IGNORE_INSTALLED=1 pipenv install -d --system --ignore-pipfile
+
+COPY . /app/notes
+WORKDIR /app/notes
+EXPOSE 80
+CMD ["flask", "run", "--port=80", "--host=0.0.0.0"]
+
+
+################# build image ######################
+
+$docker build -t notesapp:0.1 . # build Docker Image, tag it with name notesapp and version 0.1, using the Dockerfile in the current directory
+$docker login # in case you are prompt to login to Docker Hub
+
+/home/cloud_user/.docker/config.json.
+
+#################### end of build image #####################
+
+2)
+
+
+$docker images
+REPOSITORY   TAG           IMAGE ID       CREATED          SIZE
+notesapp     0.1           07ee0a7471b1   32 seconds ago   1.03GB
+python       3             178dcaa62b39   31 hours ago     917MB
+python       latest        178dcaa62b39   31 hours ago     917MB
+postgres     12.1-alpine   76780864f8de   2 years ago      154MB
+
+# python is our base image
+# The postgres image is being used to run a container for our database !!!
+
+$docker ps 
+
+CONTAINER ID   IMAGE                  COMMAND                  CREATED          STATUS          PORTS                                       NAMES
+5475ba89e0d4   postgres:12.1-alpine   "docker-entrypoint.s…"   55 minutes ago   Up 55 minutes   0.0.0.0:5432->5432/tcp, :::5432->5432/tcp   notesdb
+
+# port 5432 is mapped from the server into the container 
+# the name of the container is notesdb
+
+$docker network ls
+
+NETWORK ID     NAME      DRIVER    SCOPE
+784bf1d5e205   bridge    bridge    local
+ccda119ff5a1   host      host      local
+efda21413079   none      null      local
+91edfa39b3f8   notes     bridge    local
+
+# the database container notesdb as well as the notes network have both been provided so you don't have to configure those
+
+# However notesdb is just a blank database it doesn't have any of our application code in it. We need to use sqlalchemy to set up our database
+# However we don't want to install all the dependency management on the server itself. We can use the container we just set up as our development enviroment !!!
+
+# To do so we set up a new temporary container (--rm), interactive (--it), attached to the network notes (--network notes) so that it can talk to the database and mount the volume of the configuration 
+# directory (migrations) from the host into the container, we use bash at the end to avoid running the default command specified by the CMD instrucion
+
+
+docker run --rm -it --network notes -v /home/cloud_user/notes/migrations:/app/notes/migrations notesapp:0.1 bash
+
+root@0e20ab8e261b:/app/notes#flask db init # this creates some configuration files insise of the migrations folder
+
+  Creating directory /app/notes/migrations/versions ...  done
+  Generating /app/notes/migrations/README ...  done
+  Generating /app/notes/migrations/alembic.ini ...  done
+  Generating /app/notes/migrations/env.py ...  done
+  Generating /app/notes/migrations/script.py.mako ...  done
+  Please edit configuration/connection/logging settings in '/app/notes/migrations/alembic.ini' before proceeding.
+  
+root@0e20ab8e261b:/app/notes#flask db migrate #that creates the files that will be used to configure the db...(cont)
+
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.autogenerate.compare] Detected added table 'user'
+INFO  [alembic.autogenerate.compare] Detected added table 'note'
+  Generating /app/notes/migrations/versions/01b05fa83759_.py ...  done
+  
+root@0e20ab8e261b:/app/notes#flask db upgrade # (cont)... however those haven't applied yet to the db
+
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 01b05fa83759, empty message
+
+# Now we can run and debug our database
+
+3) 
+
+$docker run --rm -it --network notes -p 80:80 notesapp:0.1
+
+ * Serving Flask app '.' (lazy loading)
+ * Environment: development
+ * Debug mode: on
+ * Running on all addresses.
+   WARNING: This is a development server. Do not use it in a production deployment.
+ * Running on http://172.18.0.3:80/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 234-731-031
+ 
+# Our flask app is active!!!!
+
+# Check the notes app. Check if you can log in, sign up, create a note, edit the note ...
+
+# You will see in the consoloe the following get and post request between the client (my browser) and the server (connected to docker thorugh port 80)
+
+
+* Serving Flask app '.' (lazy loading)
+ * Environment: development
+ * Debug mode: on
+ * Running on all addresses.
+   WARNING: This is a development server. Do not use it in a production deployment.
+ * Running on http://172.18.0.3:80/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 870-878-357
+84.123.228.210 - - [10/Mar/2022 13:25:38] "GET / HTTP/1.1" 302 -
+84.123.228.210 - - [10/Mar/2022 13:25:39] "GET /notes HTTP/1.1" 302 -
+84.123.228.210 - - [10/Mar/2022 13:25:39] "GET /log_in HTTP/1.1" 200 -
+84.123.228.210 - - [10/Mar/2022 13:25:39] "GET /static/bulma.min.css HTTP/1.1" 200 -
+84.123.228.210 - - [10/Mar/2022 13:25:39] "GET /static/app.js HTTP/1.1" 200 -
+84.123.228.210 - - [10/Mar/2022 13:25:39] "GET /static/highlight.min.css HTTP/1.1" 200 -
+84.123.228.210 - - [10/Mar/2022 13:25:39] "GET /static/highlight.min.js HTTP/1.1" 200 -
+84.123.228.210 - - [10/Mar/2022 13:25:39] "GET /static/styles.css HTTP/1.1" 200 -
+84.123.228.210 - - [10/Mar/2022 13:25:40] "GET /favicon.ico HTTP/1.1" 404 -
+84.123.228.210 - - [10/Mar/2022 13:25:51] "GET /sign_up HTTP/1.1" 200 -
+84.123.228.210 - - [10/Mar/2022 13:25:51] "GET /static/highlight.min.css HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:25:51] "GET /static/bulma.min.css HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:25:51] "GET /static/highlight.min.js HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:25:51] "GET /static/styles.css HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:25:51] "GET /static/app.js HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:26:06] "POST /sign_up HTTP/1.1" 302 -
+
+# and so on ....
+
+# Have look at debug mode: on, debugger is active, Enviroment:development. We don't want all this in a production server
+# Let's go ahead and try debug off. To do that we need to edit the .env file
+$vi .env
+
+#we delete the existing line ENV FLASK_ENV='development'
+
+# Now we build a new image version that includes this change in the flask app
+$docker build -t notesapp:0.2 .
+
+# Notice this time everything is faster thanks to the cached layer from notesapp:0.1
+
+# run the app again
+$docker run --rm -it --network notes -p 80:80 notesapp:0.2
+
+#Now we get the following info
+
+ * Serving Flask app '.' (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: off
+ * Running on all addresses.
+   WARNING: This is a development server. Do not use it in a production deployment.
+ * Running on http://172.18.0.3:80/ (Press CTRL+C to quit)
+ 
+# We check again the app works fine and we can see get and post methods for interacting with the web server
+
+84.123.228.210 - - [10/Mar/2022 13:59:09] "GET / HTTP/1.1" 302 -
+84.123.228.210 - - [10/Mar/2022 13:59:09] "GET /notes HTTP/1.1" 200 -
+84.123.228.210 - - [10/Mar/2022 13:59:10] "GET /static/highlight.min.css HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:10] "GET /static/bulma.min.css HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:10] "GET /static/styles.css HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:10] "GET /static/highlight.min.js HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:10] "GET /static/app.js HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:16] "GET /notes/new HTTP/1.1" 200 -
+84.123.228.210 - - [10/Mar/2022 13:59:16] "GET /static/bulma.min.css HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:16] "GET /static/highlight.min.css HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:16] "GET /static/styles.css HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:16] "GET /static/highlight.min.js HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:16] "GET /static/app.js HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:29] "POST /notes/new HTTP/1.1" 302 -
+84.123.228.210 - - [10/Mar/2022 13:59:29] "GET /notes HTTP/1.1" 200 -
+84.123.228.210 - - [10/Mar/2022 13:59:30] "GET /static/bulma.min.css HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:31] "GET /static/highlight.min.css HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:31] "GET /static/styles.css HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:31] "GET /static/highlight.min.js HTTP/1.1" 304 -
+84.123.228.210 - - [10/Mar/2022 13:59:31] "GET /static/app.js HTTP/1.1" 304 -
+
+# What about the ugly WARNING displayed as info: WARNING: This is a development server. Do not use it in a production deployment.
+# Use a production WSGI server instead.
+
+
+# Let's fix that!
+
+
+4)
+
+# We need to add gunicorn to our Pipfile
+# Again we will use a docker container as our development enviroment and edit the pipfile there
+
+$docker run -it --rm -v /home/cloud_user/notes/Pipfile:/tmp/Pipfile notesapp:0.2 bash
+root@2ad217094755:/app/notes# cd /tmp #change where our pipfile is inside the container
+root@2ad217094755:/app/notes# pipenv install gunicorn # install gunicorn. This will nodify the pipfile and install it onto the system
+
+# However because we are using a temporary container the installation process will be lost, we are not modifying the Docker Image just modifying inside the container
+
+root@2ad217094755:/app/notes# exit
+$ cat Pipfile #check that gunicorn is now registered in the Pipfile of the server!!
+
+
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+python-dotenv = "*"
+
+[packages]
+flask = "*"
+flask-sqlalchemy = "*"
+psycopg2-binary = "*"
+flask-migrate = "*"
+mistune = "*"
+gunicorn = "*"
+
+# We need to upgrade our code for gunicorn. 
+# Flask uses the dotenv package to read automatically from the .env file, however we need to tell gunicorn to do that explictly !!!
+# We need to modify our init script
+
+$vi __init__.py
+
+# change from 
+import os
+import functools
+
+from flask import Flask, render_template, redirect, url_for, request, session, flash, g
+from flask_migrate import Migrate
+from werkzeug.security import generate_password_hash, check_password_hash
+
+
+#to 
+import os
+import functools
+
+from flask import Flask, render_template, redirect, url_for, request, session, flash, g
+from flask_migrate import Migrate
+from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv, find_dotenv
+load_dotenv(find_dotenv())
+
+#Now gunicorn can also read the configuration that we specified in our configuration .env file :)
+
+#Now we upgrade the dockerfile to use gunicorn instead of flask!
+$vi Dockerfile
+
+# add at the last line a new CMD and delete the one previously existing
+
+CMD["flask", "run", "--port=80", "--host=0.0.0.0"] -> delete this line
+CMD ["gunicorn", "-b 0.0.0.0:80", "notes:create_app()"] -> add this line
+
+# bind the port to 80 and tell 0.0.0.0 connections from any host"
+# gunicorn needs to be told where to start so we set it to notes module and create_app() function in __init__.py
+
+# we also need to change the current WORKDIR
+
+WORKDIR /app/notes -> delete this line
+WORKDIR /app -> add this line
+
+# flask is executed in the same path where the app lives. In this case is /app/notes/__init__.py that's why we set WORKDIR to /app/notes
+# gunicorn needs to be in the folder that contains notes/__init__.py where we have the create_app() functions. That's why we set up WORKDIR a higher level up to /app instead of /app/notes
+
+
+# Now we can build another Image version 
+$docker build -t notesapp:0.3 .
+
+# Let's go ahead a run the container detached with gunicorn
+$docker run -d --name:notesapp --network notes -p 80:80 notesapp:0.3 
+
+# check the notesapp container as well as the db container are running
+$docker ps 
+
+# check the app runs correctly!!
+# You have dockerized the notesapp!!! and then you deployed it in a production enviroment :)
+
+
+
+
+#############dockerize flask app ends here ###################
+
+
+
+Problem: what the FUCK I get the error "COPY failed: file not found in build context or excluded by .dockerignore"?
+
+
+Solution: The docker context is the directory where the Dockerfile is located in.
+In general, the easiest is to point to the files you want to copy to be in the docker context or in subfolders inside of it.
+
+
+############################################
+
+
+
+
+
+
+
+
+
+
+
+

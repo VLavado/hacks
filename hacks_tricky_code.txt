@@ -1,0 +1,26 @@
+Question: What the FUCK does img[..., ::-1] mean?
+
+Solution: It is used to invert the color channels of an image array (numpy format !!). Why would you wanna do it?
+Well Opencv uses BGR the format to load or dump images in BGR.
+However, Tensorboard uses RGB.
+Sometimes you have to change it the order to transition from one to another in your code.
+
+Example:
+
+
+############################################
+
+Question: How the HECK do you unpack a tuple in python?
+
+Solution: If you want to store several values of a tuple (or iterable) in just one variable you can do the following
+
+tpl = (0, 1, 2)
+*a, = tpl
+print(a) # [0, 1, 2]
+
+*a, b = (0, 1, 3)
+print(a) # [0, 1]
+print(b) # [3]
+
+###########################################
+

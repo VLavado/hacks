@@ -1,0 +1,65 @@
+Problem: what the HECK is os.path.realpath() ?
+
+Answer: os.path.realpath() method in Python is used to get the canonical path of the specified filename by eliminating any symbolic links encountered in the path.
+
+Examples: 
+
+victor@victor-Precision-5540: ln -s '/home/victor/file(original).txt' '/home/victor/file(shortcut).txt'
+
+# Let's use os.path.realpath() method to get canonical path and resolve symbolic links
+
+import os
+
+#Path
+path = '/home/victor/file(shortcut).txt'
+
+# Get the canonical path of the specified path by eliminating any symbolic links encountered in the path
+real_path = os.path.realpath(path)
+
+print(real_path) #/home/victor/file(original).txt
+
+# Path
+path = "/../../GeeksForGeeks / sample.py"
+real_path = os.path.realpath(path)
+print(real_path) #/GeeksForGeeks/sample.py
+
+
+###############################################################################################
+
+
+Problem: what the HECK is os.path.dirname()?
+
+Answer: os.path.dirname() method in Python is used to get the directory name from the specified path.
+
+Example: 
+
+import os
+
+#Path
+path = '/home/User/Documents'
+dirname = os.path.dirname(path)
+
+print(dirname) #/home/User
+
+#Path
+path = '/home/User/Documents/file.txt'
+dirname = os.path.dirname(path)
+
+print(dirname) #/home/User/Documents
+
+
+###############################################################################################
+
+
+Problem: I get "PermissionError: [Errno 13] Permission denied: '/model'" when executing '/model'
+
+Solution: You are trying to create a folder named 'model' inside the root directory of your Linux machine. Instead what I really want, is to create a folder named 'model' inside the directory 
+of my python project.
+
+Instead of doing:
+
+os.makedirs('/model', exist_ok = True)
+
+Just do:
+
+os.makedirs('model', exist_ok = True)

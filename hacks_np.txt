@@ -1,0 +1,56 @@
+Problem: I want to understand how axis are changed when performing np.transpose on an array.
+
+Note: You can do 
+X_t = np.transpose(X, (1,0,2)) 
+X_t = X.transpose(1,0,2)
+
+Solution: The NUMBER of the axis you see are where they were located BEFORE TRANSPOSING. The INDEX of the axis you see are where they will be located AFTER TRANSPOSING.
+
+Example: You have got a pickle object that can be load as a dictionary using bytes encoding. The key "data" contains a 10000 x 3072 numpy array, where each row is a sample, and the columns represent the pixels of the image in row order. Each image is 32 x 32 pixels with the first 1024 entries correspond to red channel values the next 1024 the green, and the final 1024 the blue. I want to make use of the transpose function to load the array and produce an image individually and visualize it.
+
+########### CODE #################
+
+import numpy as np
+import pickle
+from PIL import Image
+
+PATH_DICT = '/media/victor/cifar10/data_batch_1'
+
+with open(PATH_DICT, 'rb') as fo:
+    dct = pickle.load(fo, encoding='bytes')
+    
+images = dct[b'data'].reshape(10000, 3, 32, 32).transpose(0,2,3,1).astype('uint8') #images.shape = (10000, 32, 32, 3) which representes 10000 images with 3 channels in RGB format
+for i in range(images.shape[0]):
+    image = images[i, :] # select iteratively each image from images
+    im = Image.fromarray(image)
+    im.show() # displays the image on the screen
+    
+
+############ END #################
+
+Problem: I want to understand what the parameter "keepdims=True" means when you apply the command np.sum
+
+Solution: Let's consider that you have an array called X that will be used to sum its rows horizontally.
+
+############ CODE #################
+
+import numpy as np
+
+#X.shape = (4, 4)
+X_new = np.sum(X, axis=1, keepdims=True) # X_new.shape = (4, 1)
+
+############ END ##################
+
+Using the argument keepdims=True you get the canonical shape notion used in math e.g. (4, 1).
+
+In case you decide not to use the argument, you get the strange shape that numpy uses sometimes e.g (4,)
+
+
+###################################
+
+Problem: I want to tell the difference between np.dot(), @, np.multiply() and *
+
+Solution: In case you want to you do the algebraic matrix to matrix multiplication or matrix to vector multiplication you can use: np.dot() and @
+In case you want to do the element-wise multiplication. You can use np.multiply() or *
+
+One thing to keep in mind is that element-wise multiplication doesn't require the arguments to have the same shape. The only requirement is that they can be broadcastable to a common shape. Of course, if x1.shape == x2.shape it works without any problem.

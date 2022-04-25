@@ -1,0 +1,411 @@
+Problem: How the FUCK do I implement a fully-automated deployment in a CD pipeline?
+
+Statement: Your team is building the train schedule app. They have put a lot of work into laying out a robuts CI/CD Pipeline for the app. This pipeline requires a final, manual, approval
+step before before production deployment. However, the team is confident in the automation that they have built, and they want to eliminate this step.
+
+You have been asked to remove the manual approval step and implement a basic smoke test in its place. The pipeline already includes a canary deployment to a Kubernetes cluster, so this smoke test should
+simply query the canary service to verify that it responds correctly. If the code passes the smoke test, the pipeline should proceed with production deployment.
+
+Solution (Part1): I must first log into the Jenkins server, configuring credentials in Jenkins and configuring and running an initial build in preparation from implementing a fully-automated
+CI/CD pipeline.
+
+
+################ code ####################
+
+# first I need to login in into jenkins server. So I paste the ip address and connect to port 8080 using my browser
+54.163.35.10:8080
+
+# I am requested to introduce my username (admin) and my password. However, to get the password I need to obtain it via ssh into the server. And then I navigate into this path:
+# /var/lib/jenkins/secrets/initialAdminPassword
+$ssh cloud_user@54.163.35.10
+$sudo su # To become the superuser or root user
+$cat /var/lib/jenkins/secrets/initialAdminPassword
+
+# Once I am logged in I can either create a new admin user or use the existing one. 
+# Then after that, I need to create credentials for my github account, docker hub account, and kubernetes. 
+# Github credential will be used to pull in our github fork later, where we have the sample code of the train schedule app.
+
+# For Github and docker hub
+# I create a username with password kind of credentials, while for kubernetes I use kubernetes configuration (kubeconfig). In all cases I select global scope. For github I select as password an access token
+# obtained from profile > settings > developer settings > personal access tokens > admin:repo_hook. For docker hub you need to use the password of your account as the passowrd for the docker hub credentials.
+# In the case of kubernetes kubeconfig does not need a password. For kubeconfig options I click on Enter directly, which means I can paste the content of kubeconfig directly in the opened box. To get the
+# content of kubeconfig I need to ssh into the server kubernetes master. Once I am logged in I do $cat ~/.kube/config
+
+# It is very important to input the ID for each credential correctly as they are later on referrenced by Jenkinsfile
+
+# github ID: github_key
+# docker hub ID: docker_hub_login
+# k8s ID: kubeconfig
+
+# Now I have finished creating the three credentials.
+
+
+# Now I need to click on manage jenkins > configure system > global properties > enviroment variables
+
+# name: KUBE_MASTER_IP
+# value: 52.91.212.101
+
+# This will allow to reference the kubernetes master public ip in the JenkinsFile or the Jenkins Pipeline. We will need it once we write the smoke test.
+
+# Finally, the last part consists on adding a Github server:
+
+# Name GitHub
+# Credentials > add > Jenkins. Here I change the kind to Secret Text, scope is Global, secret is the same access token I used in the GitHub credentials previously. The id is github_secret and Descriptio is
+# Github Secret and then click add.
+
+# Now I can select in the dropdown menu the GitHub Secret I have just created. Also make sure that manage hooks option is enabled.
+
+# Click save to save all changes done in configure system
+
+
+# Now I go to the sample code of the train schedule app in GitHub where I can click "Fork" to create a new fork of this repository.
+
+# Once you create the fork you need to edit the Jenkinsfile and change the field at the top where it says DOCKER_IMAGE_NAME = "willbla/train-schedule" to DOCKER_IMAGE_NAME = "vlavado/train-schedule". Because
+# "vlavado" is the username I have in DockerHub. See below
+
+pipeline {
+    agent any
+    environment {
+        //be sure to replace "willbla" with your own Docker Hub username
+        DOCKER_IMAGE_NAME = "vlavado/train-schedule"
+    }
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Running build automation'
+                sh './gradlew build --no-daemon'
+                archiveArtifacts artifacts: 'dist/trainSchedule.zip'
+            }
+        }
+        stage('Build Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    app = docker.build(DOCKER_IMAGE_NAME)
+                    app.inside {
+                        sh 'echo Hello, World!'
+                    }
+                }
+            }
+        }
+        stage('Push Docker Image') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
+                        app.push("${env.BUILD_NUMBER}")
+                        app.push("latest")
+                    }
+                }
+            }
+        }
+        stage('CanaryDeploy') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 1
+            }
+            steps {
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+        stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 0
+            }
+            steps {
+                input 'Deploy to Production?'
+                milestone(1)
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+    }
+}
+
+# If you don't change the username, the build will try to push the Docker Image to DockerHub in the willbla repository where I don't have permissions to push to. Once I have changed the username, click on 
+# the commit changes button below.
+
+
+
+# Once I have finished that we can set-up a new project
+
+# Click on new item and call it "train-schedule" and select multibranch pipeline option
+# Go to branch sources and click Github and on credential field select the GitHub Key credential that I created earlier.
+# In owner I type VLavado as it my github username
+# In the repository I choose the cicd-pipeline-train-schedule-autodeploy which is the name of the repository
+# The behaviours sections includes some descriptions like "Discover pr from origin" or "Discover pr from forks" which typically means that Jenkins is going to try a make builds against the pr that take
+# place. This is normally what we want in a normal production set-up.
+# Click "save"
+
+# This will trigger the Scan repository
+
+# Click on train-schedule (remember the name of our app) which is located at the top left of the screen.
+# You will see some branches with the sun icons on the left, and then I click on master branch.
+# You will see some progress bar for each stage such as build, build docker image, push docker image, canary deploy and deploytoproduction.
+# When it reaches deploytoproduction It will wait for human approval, before it deploys to production. If you move your mouse over the box you will see it says, deploy to production and you will see it says
+# Deploy to production? And you can click on "Yes". This means our train-schedule app is now ready to be used.
+
+# To access it you paste the public ip address of the k8s master nod in your browser -> 52.91.212.101:8080
+
+
+################ end of code ####################
+
+Solution (Part2): Convert the existing CI/CD pipeline which still requires a manual step to be fully automated.
+
+################ code ###########################
+
+# Right now the Jenkinsfile has the Deploy to production step:
+
+
+        stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 0
+            }
+            steps {
+                input 'Deploy to Production?'
+                milestone(1)
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+    }
+}
+
+# Here I pause to wait for human input to approve for deployment.
+# That gives a chance to check-out the canary pods:
+
+        stage('CanaryDeploy') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 1
+            }
+            steps {
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+        
+# And see how the code looks like there, before we go forward with a deployment.
+
+# However, in a fully automated deployment, we want to remove the human interaction. In that fully automated state, developer can be working on code changes in branches and then as soon as they merge to the
+# master branch, we want that pipeline from master branch merge to production deployment to be fully automated and hands free.
+
+# To get that we need the following steps:
+
+# 1) remove the input step -> where I needed to click on "Yes" on the dialog box when the mouse was over the deploy to production box. Get rid of that human input.
+
+        stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 0
+            }
+            steps {
+                input 'Deploy to Production?' // <- This is removed
+                milestone(1)
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+    }
+}
+
+
+        stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 0
+            }
+            steps {
+                milestone(1)
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+    }
+}
+
+# 2) However it is just not enough to delet the input step. Because the reason why we waited for human approval was to check if everything looked good on the canary pods before deploying to production.
+# In other words we want some automated sanity checks to make sure everything looks, specially in our canary enviroment before we deploy to production.
+# We are going to do that using a smoke test. This test will do an automatic query to the canary enviroment to ensure that it is able to stand up properly and it is reponsive.
+# I want to add a new stage after canary deployment and before deploy to production
+
+
+        stage('SmokeTest') {
+            when {
+                branch 'master' // <- I want this stage to run on the master branch
+            }
+            steps { // <- I start my steps blocks
+                script {
+                    def response = httpRequest ( // <- we define a variable called response that makes use of the http request plugin that can be installed in Jenkins
+                        url = "http://$KUBE_MASTER_IP:8081/", // <- I want to make an http request to canary pods and verify I get a good response. I define the url using the enviroment variable defined 									   previously in the Jenkins system configuration. If you look at the Kubernetes deployment template for the canary deployment, which is the file 								   train-schedule-kube-canary.yml in the repository you will see it deploys in port 8081. Don't forget about the comma!!
+                        timeout: 30 // <- We wait up to 30 seconds for the response from the canary pods. Otherwise we don't continue with the deployment.       
+                    )
+                    if (response.status != 200) { // <- This logic implements what to do in case the deployment fails or something does not work. This is triggered if the timeout is greater than 30 secs. 							  response.status is the status you get from the httpRequest.
+                    error("Smoke test against canary deployment failed.")
+                    }
+                    
+                }
+            }
+        }
+        
+# 3) Right now our existing stage in deploy to production looks like this:
+
+        stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 0
+            }
+            steps {
+                milestone(1)
+                kubernetesDeploy( // <- If the smoke fails works fine then this deployment of canary pods is done using CANARY_REPLICAS = 0, which means that we get rid of canary pods in production and just 						  use the train-schedule pods. However, if the smoke test fails then, we don't get to deploy to production stage, and the canary pods will not be cleaned up because the
+                                        pipeline will fail at the smoke test, and we will never reach the point of CANARY_REPLICAS = 0. So we want to modify this. The best way to do it, is to add a post 						  block
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+    }
+}
+
+# We change the stage by doing the following:
+
+
+
+
+pipeline {
+    agent any
+    environment {
+        //be sure to replace "willbla" with your own Docker Hub username
+        DOCKER_IMAGE_NAME = "willbla/train-schedule"
+        CANARY_REPLICAS = 0 // <- We can't add a enviromental variable in the post block. Therefore I put it in here, when its needed down below. In the canary deploy stage it is overwrite to 1.
+    }
+    
+        stage('CanaryDeploy') {
+            when {
+                branch 'master'
+            }
+            environment { 
+                CANARY_REPLICAS = 1 // <- Here is overwritten to 0
+            }
+            steps {
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+
+stage('DeployToProduction') {
+            when {
+                branch 'master'
+            }
+            steps { // <- I got rid of the enviroment block that wast just before the steps block
+                milestone(1)
+                kubernetesDeploy( 
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube-canary.yml',
+                    enableConfigSubstitution: true
+                )
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'train-schedule-kube.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+    }
+    post { // <- The post block is typed in here. This is how we add post build actions in a Jenkins pipeline. 
+        cleanup{ // <- The steps specified in this cleanup block will be executed regardless the build passes or not. As we have changed in the global space that CANARY_REPLICAS = 0, there will not be 			canary pods even if the smoke test fails, so in this way we avoid to spent resources that will not be working.
+            kubernetesDeploy( // 
+                kubeconfigId: 'kubeconfig',
+                configs: 'train-schedule-kube-canary.yml',
+                enableConfigSubstitution: true
+        }
+    }
+}
+
+# 4) Commit all those changes!! (remember we are in the master branch)
+# 5) All the changes can be cheked at: https://github.com/linuxacademy/cicd-pipeline-train-schedule-autodeploy/blob/example-solution/Jenkinsfile
+# 6) Now that I commited those changes, my build is already executing. These are the new stages: declarative: checkout scm ,build, build docker image, push docker image, canary deploy, smoke test, deploy to production, declarative post actions.
+# 7) We have sucessfully deployed to production!!!
+# 8) In a normal production enviroment, developers will be working on its braches, making changes to the code and the merge those changes with the main branch. Once that pr takes place it will trigger a build to integrate those new changes and deploy to production.
+# 9) Let's try to see if we can pr from "new-code" branch to the "master" branch, and then deploy to production. Before doing that        ->>>> Be carefule we don't want to do the pr in the origina fork, but in our current fork that we are working with right now  <<<<<<-
+# 10) base: master <- branch: new_code Click on create pull request, then merge pull request and confirm merge. 
+# 11) That new commitment to the master branch just triggered a new build that we can check in master. That leads to another deployment to production.
+
+
+
+
+
+
+
+
+
+
+

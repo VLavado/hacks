@@ -1,0 +1,4 @@
+Problem: I neet a deep dive guide into python import statement...where can I get it?
+
+Solution: Here you go :)
+https://chrisyeh96.github.io/2017/08/08/definitive-guide-python-imports.html

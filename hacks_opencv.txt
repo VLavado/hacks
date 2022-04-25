@@ -1,0 +1,7 @@
+Problem description:
+
+When trying to display an image using opencv, with cv2.imshow(f'image', image) I get the following error message:
+error: (-2:Unspecified error) The function is not implemented. Rebuild the library with Windows, GTK+ 2.x or Cocoa support. If you are on Ubuntu or Debian, install libgtk2.0-dev and pkg-config, then re-run cmake or configure script in function 'cvShowImage'
+
+Solution:
+pip install opencv-python --force-reinstall --no-cache-dir

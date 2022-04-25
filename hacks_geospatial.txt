@@ -1,0 +1,35 @@
+Problem: What the HECK is WKT?
+
+Solution: WKT stands for Well Known Text. It is an encoding format specifically designed to characterize and store geomtric spatial objects in a vectorial manner.
+
+These are the types of basic geometries:
+
+#############POINT####################
+
+POINT(10 20) #2d point
+POINT(10 5 3) #3d point
+
+############MULTIPOINT################
+
+MULTIPOINT((10 20), (30 50))
+
+############LINESTRING################
+
+LINESTRING(10 35, 5 15, 20 30)
+
+############POLYGON###################
+
+POLYGON(10 10, 15 15, 10 30, 5 10, 10 10) #the first and last point are the same
+
+############MULTIPOLYGON#############
+
+MULTIPOLYGON(
+(10 10, 15 15, 10 30, 5 10, 10 10), 
+(25 5, 20 15, 30 30, 25 5)
+)
+
+
+Summary: 
+Each geometry is encoded as a parameter with its geometry type followed by the necessary points to define it, in the space between parenthesis.
+Coordinates are defined by X and Y components separated by spaces, and each pair of coordinates is separated by commas.
+For multipart geometries (MULTIPOINT, MULTILINESTRING and MULTIPOLYGON), each of the individual parts is contained in a parenthesis and separated by commas.

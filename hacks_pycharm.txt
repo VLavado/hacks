@@ -1,0 +1,6 @@
+Problem: Sometimes Pycharm hangs and stops working to the point that I am not able to close the windows. What can I do about?
+
+Solution: **IF** there are no more java processes...it's easy peasy. Just type in your terminal:
+
+victor@victor-Precision-5540:~$ killall java -9
+

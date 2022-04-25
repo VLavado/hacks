@@ -1,0 +1,22 @@
+Problem: What the FUCK is /boot?
+
+Solution: It is a hard drive partitions where files related with turning on the machine
+
+
+#######################################################
+
+Problem: What happens when you get the message "Tienes poca memoria en /boot"? Is it the end of the world? 
+
+Solution: Not at all! This probable means that you have installed many kernels while updating the software of your machine.
+
+To check if that's the case:
+
+1) If you don't have it yet go and install synaptic: sudo apt-get install synaptic
+2) Launch it: sudo synaptic
+3) Click on the search icon and type: linux-image  // Here you should see many packages with a green box on the left meaning you have installed them. The ones we are interested in have a description on the left saying something like "signed kernel image generic"
+4) On another terminal type: uname -a //This will display the kernel you are actually using. The rest of the kernels with the green box can be "safely uninstalled" 
+5) Click right with your mouse on those kernels you want to uninstall where it says "Marcar para desinstalar completamente"
+6) You will get a dialog box. Check that you are really uninstalling what you want and then click "aplicar".
+7) Enjoy a happy life :)
+
+####################################################### 

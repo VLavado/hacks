@@ -1,0 +1,21 @@
+Problem description:
+
+Very ofter I need to keep on searching what is the meaning for each dimension according to data type. I want to have all that info in the same place. So here it goes:
+
+Solution:
+
+features == channels
+
+#####PyTorch Tensors##### 
+
+([batch, channels, height, width])
+
+#####Tensorflow, Numpy#####
+
+([batch, height, width, channels])
+
+#####Pil library (Image) ######
+
+(width, height)
+
+Channels come inside the variable information "RGB Image" for example

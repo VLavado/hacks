@@ -1,0 +1,60 @@
+Problem: What the HECK is __file__ variable?
+
+Solution: A double underscore variable in Python is usually referred to as a dunder. A dunder variable is a variable that Python has defined so that it can use it in a "special way".
+
+__file__ is a variable that contains the path to the module that is currently being imported. Python creates a __file__ variable for itself when it is about to import a module
+
+Example: Let’s create a module named HelloWorld and store it as a .py file.
+
+# Creating a module named HelloWorld
+
+def hello():
+    print("This is imported from HelloWorld")
+    
+
+
+#Example 1
+############ code ###############
+
+#Now let’s create another file named GFG.py that imports the above-created module to show the use of __file__ variable.
+
+# Importing the above created module
+import HelloWorld
+ 
+ 
+# Calling the method created inside the module
+HelloWorld.hello()
+ 
+# printing the __file__ variable
+print(HelloWorld.__file__)
+
+Output:
+This is imported from HelloWorld
+/home/victor/hacks/hacks_dunder__file__/HelloWorld.py
+
+############ end of code ###############
+
+
+#Example2
+############ code ###############
+
+# Let's create a CURRENT_DIR_FILE to generate os operations easily without worrying about absolute vs relative paths
+
+####Option 1######
+
+# We are working with an isolated notebook on jupyter
+
+import os
+
+cwd = os.getcwd() #cwd = /home/jovyan/efs/template/data_preparation
+CURRENT_DIR_FILE = os.path.dirname(cwd) #/home/jovyan/efs/template
+
+#####Option 2######
+
+# We are working in a repository where we are importing modules and we want to run some test.
+# in the tests/__init__.py module we can have the following
+
+import os
+CURRENT_DIR_FILE = os.path.dirname(os.realpath(__file__))
+
+

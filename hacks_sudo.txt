@@ -1,0 +1,7 @@
+Problem: I want cd into a directory but I get "permission denied". What can I do?
+
+Solution: you can become a superuser a.k.a root user that has access to all commands, files, services on an Ubuntu Linux operating system.
+
+$sudo su
+
+Then you will be able to access it

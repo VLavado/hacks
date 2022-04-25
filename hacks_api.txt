@@ -1,0 +1,81 @@
+What the FUCK are http headers?
+
+Solution: HTTP headers let the client and the server pass additional information with an HTTP request or response. An HTTP header consists of its case-insensitive name followed by a colon (:), then by its value. Whitespace before the value is ignored.
+
+#############################################
+
+What the FUCK is cross-origin resource sharing (CORS)?
+
+Solution: Cross-Origin Resource Sharing (CORS) is an HTTP-header based mechanism that allows a server to indicate any origins (domain, scheme, or port) other than its own from which a browser should permit loading resources.
+
+An example of a cross-origin request: the front-end JavaScript code served from https://domain-a.com uses XMLHttpRequest to make a request for https://domain-b.com/data.json.
+
+
+#############################################
+
+What the FUCK is a REST API?
+
+Solution:
+
+REST is all about a client-server relationship, where server-side data are made available through representations of data in simple formats, often JSON and XML. These representations for resources, or collections of resources, which are then potentially modifiable, with actions and relationships being made discoverable via a method known as hypermedia. 
+Hypermedia is fundamental to REST, and is essentially just the concept of providing links to other resources.
+
+Beyond hypermedia there are a few other constraints, such as:
+
+- REST must be stateless: not persisting sessions between requests.
+- Responses should declare cacheablility: helps your API scale if clients respect the rules.
+- REST focuses on uniformity: if you’re using HTTP you should utilize HTTP features whenever possible, instead of inventing conventions.
+
+#############################################
+
+What the FUCK is RPC in API?
+
+Solution:
+
+Before REST became popular (after companies such as Twitter and Facebook labeled their APIs as REST), most APIs were built using an XML-RPC or SOAP. XML-RPC was problematic, because ensuring data types of XML payloads is tough. In XML, a lot of things are just strings, so you need to layer meta data on top in order to describe things such as which fields correspond to which data types. 
+This became part of the basis for SOAP (Simple Object Access Protocol). XML-RPC and SOAP, along with custom homegrown solutions, dominated the API landscape for a long time and were all RPC-based HTTP APIs.
+
+The “RPC” part stands for “remote procedure call,” and it’s essentially the same as calling a function in JavaScript, PHP, Python and so on, taking a method name and arguments. Seeing as XML is not everyone’s cup of tea, an RPC API could use the JSON-RPC protocol, or you could roll a custom JSON-based API, as Slack has done with its Web API.
+
+Examples:
+
+Take this example RPC call:
+
+#### code ####
+
+POST /sayHello HTTP/1.1
+HOST: api.example.com
+Content-Type: application/json
+
+{"name": "Racey McRacerson"}
+
+#### end code ####
+
+In JavaScript, we would do the same by defining a function, and later we’d call it elsewhere:
+
+#### code ####
+
+
+/* Signature */
+function sayHello(name) {
+  // ...
+}
+
+/* Usage */
+sayHello("Racey McRacerson");
+
+#### end code ####
+
+Solution continues:
+
+The idea is the same. An API is built by defining public methods; then, the methods are called with arguments. RPC is just a bunch of functions, but in the context of an HTTP API, that entails putting the method in the URL and the arguments in the query string or body.
+
+So What are they for?
+
+RPC-based APIs are great for actions (that is, procedures or commands).
+
+REST-based APIs are great for modeling your domain (that is, resources or entities), making CRUD (create, read, update, delete) available for all of your data.
+
+REST is not only CRUD, but things are done through mainly CRUD-based operations. REST will use HTTP methods such as GET, POST, PUT, DELETE, OPTIONS and, hopefully, PATCH to provide semantic meaning for the intention of the action being taken.
+
+RPC, however, would not do that. Most use only GET and POST, with GET being used to fetch information and POST being used for everything else. It is common to see RPC APIs using something like POST /deleteFoo, with a body of { “id”: 1 }, instead of the REST approach, which would be DELETE /foos/1.

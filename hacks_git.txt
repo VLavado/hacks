@@ -1,0 +1,50 @@
+Problem description: I want to remove files from stage area in git (the place where files are sent after doing git add) How can I do it?
+
+Solution: To remove ALL files from stage area just do in the following in your git root directory -> git reset HEAD -- .
+
+Solution: To remove just ONE file from stage are just do -> git reset HEAD -- path/to/file
+
+
+#########################################
+
+Problem description: I want to create a brand new remote repository to commit all my changes locally. How can I do it?
+
+Solution: You just need to specify the name of the remote repository and the url -> git add remote <remote_name> <url>
+
+Note: The url you specify may be in https or ssh format !!!! Notice that :)
+
+
+#########################################
+
+
+Problem: How to undo a Git commit that was not pushed?
+
+Solution:
+
+Method 1: Undo commit and keep all files staged
+In case you just want to undo the commit and change nothing more, you can use
+
+1
+git reset --soft HEAD~;
+This is most often used to make a few changes to your latest commit and/or fix your commit message. Leaves working tree as it was before reset.
+soft does not touch the index file or the working tree at all (but resets the head to the previous commit). This leaves all your changed files Changes to be committed, as git status would put it.
+
+Method 2: Undo commit and unstage all files
+In case you want to undo the last commit and unstage all the files you can use the following
+
+1
+git reset HEAD~;
+or
+
+1
+git reset --mixed HEAD~;
+mixed will reset the index but not the working tree (i.e., the changed files are preserved but not marked for commit) and reports what has not been updated. This is the default action.
+
+Method 3: Undo the commit and completely remove all changes
+The following method will undo the commit and revert all changes so that your state is exactly as it was before you started making changes.
+
+1
+git reset --hard HEAD~;
+hard resets the index and working tree. Any changes to tracked files in the working tree since the previous commit are discarded.
+
+

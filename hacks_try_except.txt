@@ -1,0 +1,40 @@
+Question: How can I get a deep understanding of try and except blocks?
+
+Answer:
+
+First, let's begin with what exceptions are and why try...except blocks are useful
+
+Exceptions in Python are objects that represent errors. Exceptions can be raised in many ways, such as passing invalid arguments to functions (“Boo” + 7), performing certain illegal operations (12 / 0) 
+or even explicitly (raise TypeError). By default, exceptions stop Python programs and print a Traceback to the console with information about the exception and how it was raised. However, the try 
+statement exists to give control flow to exceptions so that you can prevent your program from crashing and even use exception objects to your advantage. This is commonly referred to as “catching” an 
+exception. The try statement looks like this:
+
+Try...except blocks have the following elements:
+
+try:
+
+The code with the exception that you want to catch. If an exception is raised, control flow leaves this block immediately and goes to the except block.
+
+ except [(Exception[, Exception])] [as VAR]:
+ 
+This code is executed only if an exception was raised in the try block. Code executed in this block is just like normal code: if there is an exception, it will not be automatically caught (and probably 
+stop the program).
+
+You can optionally name specific types of exceptions in the except statements, in which case the block will only be executed if one of the named exceptions was the one raised in try. When naming 
+multiple exceptions, use a tuple. It is legal to have multiple except statements, each of which names different types of exceptions. If no exceptions are named in the except statement, it will catch 
+all exceptions; useful to put after except statements that name exceptions.
+
+Including the as expression with the except statement allows you to store the exception object raised in the try block in a variable and use it within this block. To store an exception in a variable 
+when none are named, name “Exception” instead (i.e. except Exception as e). Only one variable can be listed after as.
+
+This block is required (even if all it has is pass).
+
+else:
+
+This code is executed only if no exceptions were raised in the try block. Code executed in this block is just like normal code: if there is an exception, it will not be automatically caught (and 
+probably stop the program). Notice that if the else block is executed, then the except block is not, and vice versa. This block is optional.
+
+finally:
+
+This code always executes after the other blocks, even if there was an uncaught exception (that didn’t cause a crash, obviously) or a return statement in one of the other blocks. Code executed in this 
+block is just like normal code: if there is an exception, it will not be automatically caught (and probably stop the program). This block is also optional.

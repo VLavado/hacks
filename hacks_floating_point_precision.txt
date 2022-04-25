@@ -1,0 +1,42 @@
+Problem: What the HECK is floating point precision?
+
+Solution: 
+
+Floating point numbers have three components:
+
+	1 Sign bit – whether the number is positive or negative
+	2 Exponent bits – the magnitude of the number
+	3 Mantissa bits – the fractional bits
+	
+32 bit floats use 1 bit for sign, 8 bits for exponent and 23 bits for mantissa. Whatever number is encoded in the exponent bits, you subtract 127 to get the actual exponent, meaning the exponent can be from -126 to +127.
+
+
+64 bit doubles use 1 bit for sign, 11 bits for exponent and 52 bits for mantissa. Whatever number is encoded in the exponent bits, you subtract 1023 to get the actual exponent, meaning the exponent can be from -1022 to +1023.
+
+
+16 bit half floats use 1 bit for sign, 5 bits for exponent and 10 bits for mantissa. Whatever number is encoded in the exponent bits, you subtract 15 to get the actual exponent, meaning the exponent can be from -14 to +15.
+
+
+For all of the above, an exponent of all zeros has the special meaning “exponent 0” (and this is where the denormals / subnormals come into play) and all ones has the special meaning “infinity”
+
+The exponent bits tell you which power of two numbers you are between – [2^{exponent}, 2^{exponent+1}) – and the mantissa tells you where you are in that range.
+
+Example: 
+
+Let’s look at the number 3.5.
+
+To figure out the precision we have at that number, we figure out what power of two range it’s between and then subdivide that range using the mantissa bits.
+
+3.5 is between 2 and 4. That means we are diving the range of numbers 2 to 4 using the mantissa bits. A float has 23 bits of mantissa, so the precision we have at 3.5 is:
+
+\frac{4-2}{2^{23}} = \frac{2}{8388608} \approx 0.000000238418579
+
+3.5 itself is actually exactly representable by a float, double or half, but the amount of precision numbers have at that scale is that value. The smallest number you can add or subtract to a value between 2 and 4 is that value. That is the resolution of the values you are working with when working between 2 and 4 using a float.
+
+Using a double instead of a float gives us 52 bits of mantissa, making the precision:
+
+\frac{4-2}{2^{52}} = \frac{2}{4503599627370496} \approx 0.00000000000000044408921
+
+Using a half float with 10 bits of mantissa it becomes:
+
+\frac{4-2}{2^{10}} = \frac{2}{1024} = 0.001953125

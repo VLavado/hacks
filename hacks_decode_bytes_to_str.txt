@@ -1,0 +1,10 @@
+Problem: I want to know how to convert an element of a list made of bytes to a string
+
+Solution: Select the element you want to convert and decode it using 'utf-8'
+
+Example:
+
+lst_bytes = dct[b'filenames'] # lst_bytes contains elements made of bytes
+print(lst_bytes[0]) # b'cool_truck.png'
+lst_bytes[0] = lst_bytes[0].decode('utf-8')
+print(lst_bytes[0]) # 'cool_truck.png'

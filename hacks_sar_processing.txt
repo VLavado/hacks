@@ -1,0 +1,36 @@
+Problem: What is SAR?
+
+Answer: SAR stands for synthetic aperture radar. It is a type of data collection with the following key aspects:
+
+- Active: The sensor produces its own energy (e.g. microwaves) and then records the amount of that energy reflected back after interacting with the earth. It is opposed to "passive" where the sensor 
+relies on an external source of energy (light) to record the information. Google Earth is an example of passive sensor.
+
+- Microwave: the wavelengths used in sar go from cms to meters. The nature of microwaves allows to penetrate through obstacles like a clouds, and get information from the earth surface, regardless it
+is day or night.
+
+- Coherent: basically means that because you have a sensor, and you have a signal which you know, you can calculate the phase of the signal.
+
+*Note: it is called Synthetic aperture because the antenna of the satellite receives a sequence of acquisitions that are combined to simulate a much larger anthenna. Keep in mind that spatial 
+resolution of radar data is directly related to the ratio of the sensor wavelength to the length of the sensor antenna. For a given wavelength, the longer the antenna, the higher the spatial 
+resolution. From a satellite in space operating at a wavelength of about 5 cm (C-band radar), in order to get a spatial resolution of 10 m, you would need a radar antenna about 4250 m long, which is impractical :)
+
+############################
+
+What is an interferogram?
+
+Answer: Let's say you have two SAR images taken in two different times: t1 and t2. If you combine the two images, since they are coherent signals you can obtain the difference between their phases and 
+that's known as interferogram.
+
+The interferogram is a map of the differences. Let's say that on t1, we have a volcano which is recorded in sar1. Later on, in t2, we have the volcano with some displacement (call it ld_loss) recorded
+in sar2. The interferogram will register the displacement ld_loss after combining sar1 and sar2 and using some coding (e.g. color coding) will represent ld_loss. 
+
+<<<<< Important: ld_loss is measured in the line of sight (LOS) of the sensor. ld_loss, it is not vertical, horizontal, east, west or whatever....>>>>>>>>>
+
+Nonetheless, it is possible to translate the desplacement ld_loss in LOS to more conventional system or coordinates (e.g. N, S, W and E)
+
+The color codings appearing in the interferogram are called fringes. The interferogram representes the difference between sar1 and sar2 using complex numbers, therfore we use a pi to -pi (radians) domain to retrieve phase. Everytime we see a color cycle going from red (pi) to purple (-pi) alternating, this corresponds to the wavelength of the sensor we are working with, for example 5.6 cm. So we
+convert from radians to centimeters.
+
+Example: t1 is 03-2000 and t2 is 07-2000. We obtain the interferogram of both images and in the volcano zone we observe 2.5 fringes or complete cycles, given that 
+
+
