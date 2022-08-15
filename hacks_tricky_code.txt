@@ -2,7 +2,7 @@ Question: What the FUCK does img[..., ::-1] mean?
 
 Solution: It is used to invert the color channels of an image array (numpy format !!). Why would you wanna do it?
 Well Opencv uses BGR the format to load or dump images in BGR.
-However, Tensorboard uses RGB.
+However, Tensorboard uses RGB. OpenCv also uses RGB to load and save images
 Sometimes you have to change it the order to transition from one to another in your code.
 
 Example:

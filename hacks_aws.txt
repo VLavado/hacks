@@ -1,0 +1,14 @@
+Question: Do I need to have a prefix (a.k.a) subfolder created inside a s3 bucket before uploading a file to s3?
+
+Answer: No! This answer from stackoverflow is quite awesome:
+
+S3 is an object storage, it has been designed as a Key-Value store where the key is the full name of the file and the content of the file is the Object.
+
+However, for the sake of organizational simplicity, the Amazon S3 console supports the folder concept as a means of grouping objects.
+Amazon S3 does this by using a shared name prefix for objects (that is, objects have names that begin with a common string, / by default). Object names are also referred to as key names.
+
+Example with code:
+
+import boto3
+s3 = boto3.resource('s3')
+s3.Bucket('autogpe-datasets').upload_file('/tmp/hello.txt', 'txt_files/hello.txt')

@@ -1,0 +1,107 @@
+Question: What are the basics of unittest needed to write test for machine learning models?
+
+Answer:
+
+- The basic building blocks of unit testing are test cases. Test cases are subclasses of unittest.TestCase.
+
+- The code of a test cases should be entirely self-contained, such that it can be run either in isolation or in arbitrary combination with any number of other test cases.
+
+- Each test case will be implement one or several test methods to perform testing of a particular aspect of code.
+
+- Inside the test methods, we use the assert methods, self.assert ..., to test a particular condition of the code. For example self.assert(1, 2)
+
+- Test can be numerous, and their setup repititive. To avoid duplicated code, we can implement methods such as setUp() or setUpClass() which the testing framework will automatically call for every 
+  single test that we run. 
+
+- Similarly, we can provide a tearDown() method that tidies up after the test method has been run
+
+- A working enviroment that includes setup and teardown is called a text fixture.
+
+- Each test case is created as a unique test fixture used to execute each individual test method. Thus, setUp(), tearDown() and __init__() will be calle once per test.
+
+Question: Can you show me some examples?
+
+Answer:
+
+Here you have an generic test that includes all the points mentioned above:
+
+import unittest
+
+class WidgetTestCase(unittest.TestCase):
+    def setUp(self):
+        self.widget = Widget('The widget)
+        
+    # First test method
+    def test_default_widget_size(self):
+        self.assertEqual(self.widget.size(), (50, 50), 'incorrect default size')
+        
+    # Second test method
+    def test_widget_resize(self):
+        self.widget.resize(100, 150)
+        self.assertEqual(self.widget.size(), (100, 150), 'wrong size after resize')
+        
+    def tearDown(self):
+        self.widget.dispose()
+        
+        
+The test case above is an example of test fixture. It has setup, teardown and two individual test methods
+
+The example below is more specific of a real machine learning model:
+
+import unittest
+import torch
+
+from classification_model.network.classifier import Net
+
+class NetTest(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.n_class = 10
+        cls.model = Net()
+
+    def test_forward(self):
+        dummy_input = torch.zeros((1, 3, 32, 32))
+        self.model.eval()
+        with torch.no_grad():
+            output = self.model(dummy_input)
+
+        self.assertTrue(output.size() == (1, self.n_class))
+        
+
+In this case we setup a generic class with two attributes: n_class and model. The model attribute is actually the network architecture. The test method test_forward checks that the output size of the forward pass of the network architecture is actually (1, 10).
+        
+        
+        
+        
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

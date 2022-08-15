@@ -12,3 +12,26 @@ very good, because it throws a bunch of false positives (people detected where t
 
 A hard negative is when you take that falsely detected patch, and explicitly create a negative example out of that patch, and add that negative to your training set. When you retrain your classifier,
 it should perform better with this extra knowledge.
+
+###################################################
+
+Problem: What the HECK is objectness in the concept of object detection (with YOLO)?
+
+Solution: It is the network's confidence that some object exists in a given box.  
+While the class score is the conditional probability, given that there is an object in the box (i.e. probability of class x given an object exist in this box).
+
+Therefore, the total confidence score for each class is thus the product of the objectness and the class score.
+
+
+####################################################
+
+Problem: What the HECK is a mosaic data transformation in the context of training YOLO? How can it affect training with satellite images?
+
+Mosaic data transformation consists on combining 4 pictures into a big picture. During the training (not in validation set) of YOLOv5, this data transformation takes the corresponding index and
+adds three more random indexes to generate the mosaic.
+
+For the specific case of oil tank detection mosaic might not be the best option considering the tank sizes for the labes are quite small. So if you resize each individual image to become a quarter
+of the mosaic's size then it would be even harder for the network to detect those tanks. As always, with deep learning it is good idea to start with simpler experiment configurations and then start
+move up to more complex settigs: e.g. bigger neural networks and 
+
+

@@ -10,7 +10,7 @@ Some examples:
 
 ls -la | grep under
 
-list all files and then filter those that have under in its name
+list all files and then filter those that have "under" in its name
 
 aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${NONPROD_ECR}
 
@@ -68,4 +68,28 @@ Problem: How the HECK do I unzip all .zip files in a certain directory?
 
 Solution: Easy peasy
 
-$unzip "*.zip" 
+$unzip "*.zip"
+
+
+############################################
+
+Problem: How do you unzip a multi-part archive?
+
+Statemente: Imagine you have several archives that belong to the same file. For example: 
+
+-ChinaSE.partaa.zip
+-ChinaSE.partab.zip
+...
+-ChinaSE.partat.zip
+
+Solution:
+
+The first step is to turn all those multi-part archives into a single one. To do so you take the common part in the file names:
+
+$cat chinaSE.parta* > output.zip
+
+And join all of them into a single file.
+
+The second step is simply:
+
+$unzip output.zip

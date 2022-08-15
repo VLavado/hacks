@@ -54,3 +54,8 @@ Solution: In case you want to you do the algebraic matrix to matrix multiplicati
 In case you want to do the element-wise multiplication. You can use np.multiply() or *
 
 One thing to keep in mind is that element-wise multiplication doesn't require the arguments to have the same shape. The only requirement is that they can be broadcastable to a common shape. Of course, if x1.shape == x2.shape it works without any problem.
+
+
+###################################
+
+

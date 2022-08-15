@@ -1,0 +1,69 @@
+Question: What the heck are *args and **kwargs?
+
+Tl, dr: They are a pythonic definition of calling and declaring function with unknown number of parameters. For positional arguments/parameters we use *args, but for keyword arguments/parameters we use **kwargs.
+
+Long answer:
+
+When we want to define a python function with an arbitrary number of positional parameters we apply packing
+
+def mul(*args):
+    result = 1
+    for i in args:
+        result = i * result
+    print(result)
+    
+mul(2,3,4)
+# Output 24
+
+When we want to call a python function with an iterable that includes an arbitrary number of positional arguments, we can apply unpacking of arguments
+
+def str_counter(*args):
+    for a in args:
+        print(len(a))
+        
+tpl = ('car', 'house', 'tree', 'cat')
+name = 'victor'
+sex = 'male'
+
+str_counter(name, sex, tpl)
+# Output 6 4 4
+
+str_counter(name, sex, *tpl)
+# Output 6 4 3 5 4 3
+
+When we want to define a python function with an arbitrary number of keyword parameters we apply packing
+
+def mul_wk(**kwargs):
+    result = 1
+    for i in kwargs:
+        result=kwargs[i]*result
+    print(result)
+    
+mul_wk(a=1, b=2, c=3)
+# Output 6
+
+When we want to call a python function with an iterable that includes an arbitrary number of keyword arguments we apply unpacking of arguments
+
+def kwarg_checker(**kwargs):
+    for k, v in kwargs:
+        print(k, v)
+    
+key_words_args = {'name': 'Victor', 'sex': 'male', 'age': 30}
+kwarg_checker(**key_words_args)
+# name Victor sex male age 30
+
+If you don't apply unpacking in the arguments:
+kwarg_checker(**key_words_args)
+# TypeError: kwarg_checker() takes 0 positional arguments but 1 was given
+
+You can combine both notations to cover all posible use cases to call and declare any function:
+
+def generic_function(*args, **kwargs):
+    # statements
+
+
+
+
+
+
+

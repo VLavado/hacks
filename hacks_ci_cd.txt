@@ -399,11 +399,130 @@ stage('DeployToProduction') {
 # 10) base: master <- branch: new_code Click on create pull request, then merge pull request and confirm merge. 
 # 11) That new commitment to the master branch just triggered a new build that we can check in master. That leads to another deployment to production.
 
+############################################################################################
+
+Question: What approach can I use to release a new version when I do a pull request from dev to main?
+
+Answer: Let's assume you have a CHANGELOG.md in dev with the latest entry:
+
+[1.24.1] - 2022-06-08
+Sarpy version limited to 1.2.69
+
+Now you want to release a new version in main that integrates those changes. To do that, you just need to do a pull request from dev to main where you increase the minor version.
+So, CHANGELOG.md will look like this in dev and main (once the pull request passes all tests):
+
+[1.25.0] - 2022-06-09
+Released 1.25.0
+
+############################################################################################
+
+Question: I have implemented a new function in a brand new feature branch. How is the process to integrate that new function into the dev/beta enviroment so that it will be used later on in a new
+release of the package?
+
+Answer: Let's go step by step
+
+#STEP 1 -> Define the function
+
+# pyGeomni/pyGeomni/utils/geometry_utils.py
+
+import geopandas
+from typing import Union
+from shapely.geometry import Polygon, MultiPolygon
+import numpy as np
+
+def get_country_wkt(country:str) -> Union[Polygon, MultiPolygon]:
+    """
+    Function that takes a country name as input and returns its corresponding wkt
+
+    :param country: Name of the country
+    :return:
+    """
+    country = country.capitalize()
+    world_gdf = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+    countries_available = world_gdf['name']
+    assert country in countries_available.values, f'The country: {country} is not available'
+    wkt_country = world_gdf[world_gdf['name'] == country].get('geometry').iat[0]
+    return wkt_country
+    
+# STEP 2 -> Write the tests
+
+# We need to test possible use cases of the function and check it works as expected. Two cases to think about:
+# case 1: test that a certain country returns the expected wkt
+# case 2: test that the country passed by the user actually exists and if not raiseValueError exception
+
+# The approach to build the test is a variation of TDD
+
+# pyGeomni/tests/pyGeomni/utils/geometry_utils.py
+import unittest
+from pyGeomni.utils.geometry_utils import get_country_wkt
+
+# First iteration -> make a test fail in case 1
+
+class TestGeometryUtils(unittest.TestCase):
+    def test_country_wkt(self):
+        expected_wkt = '' 
+        country_wkt = get_country_wkt(country='Nigeria')
+        self.assertEqual(expected_wkt, country_wkt.wkt) # country_wkt.wkt converts country_wkt to string
+        
+# Second iteration -> make test pass in case 1
+
+class TestGeometryUtils(unittest.TestCase):
+    def test_country_wkt(self):
+        expected_wkt = 'POLYGON ((2.691701694356254 6.258817246928629, 3.574180128604553 6.258300482605719, 2.691701694356254 6.258817246928629))'
+        country_wkt = get_country_wkt(country='Nigeria')
+        self.assertEqual(expected_wkt, country_wkt.wkt)
+        
+# Third iteration -> make test fail in case 2
+
+class TestGeometryUtils(unittest.TestCase):
+    def test_country_wkt(self):
+        expected_wkt = 'POLYGON ((2.691701694356254 6.258817246928629, 3.574180128604553 6.258300482605719, 2.691701694356254 6.258817246928629))'
+        country_wkt = get_country_wkt(country='Nigeria')
+        self.assertEqual(expected_wkt, country_wkt.wkt)
+    def test_country_name(self):
+        with self.assertRaises(ValueError) as context:
+            get_country_wkt(country='dummy')
+        self.assertIn('The country: Dummy is not available', str(context.exception))
+        
+# Fourth iteration -> make test pass in case 2. For this I need to change the code of the function, change the assert (AssertionError) for ValueError
+
+def get_country_wkt(country:str) -> Union[Polygon, MultiPolygon]:
+    """
+    Function that takes a country name as input and returns its corresponding wkt
+
+    :param country: Name of the country
+    :return:
+    """
+    country = country.capitalize()
+    world_gdf = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+    countries_available = world_gdf['name']
+    if country not in countries_available.values:
+        raise ValueError(f'The country: {country} is not available')
+    wkt_country = world_gdf[world_gdf['name'] == country].get('geometry').iat[0]
+    return wkt_country
+    
+# Now the test pass for both cases! 
+
+# STEP 3 -> Commit changes on terminal
+git add -u
+git commit -m "Implemented new function get_country_wkt and the unittest"
+git push origin vlc/country_wkt_function
+
+# STEP 4 -> Create pull request
+
+# On Github console click on "compare & pull request" button from vlc/country_wkt_function into dev branch
+# Add the issue link to the issue you opened inside pyGeomni repo and then comment the changes of the pull request
+# Click on some reviewers to verify your code
+# Click on "create pull request" button 
+# Once this is done, the build will start and all corresponding tests and steps will be done as described in the ci_cd template yaml
+
+STEP5 -> Merge on dev branch
+
+# IF the build passes the only thing remaining is to get approved by the reviewers of the code. Once this happens the pull request can be merged by clicking on "merge pull request" button. Then, after that the last button is to press "Confirm merge"
+# IF the build DOES NOT pass. You will have to change the code, do some commits and launch the code again.
 
 
-
-
-
+        
 
 
 

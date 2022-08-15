@@ -73,7 +73,7 @@ deepspeed==0.4.0 will be installed without any problems :)
 
 ######################
 
-Problem: I want to update to the latest version all dependencies in my requirements.txt. How can I do it?
+Problem: I want to update to the latest version of all dependencies in my requirements.txt. How can I do it?
 
 Solution: 
 
@@ -99,3 +99,19 @@ This is how i do it :)
 pip install -U -r requirements.txt
 
 You get the latest version of these dependencies !!
+
+######################
+
+Problem: I want to update to the latest version of all dependencies in my requirements.txt, but not using the cached version. In other words I want to resintall completely from scratch.
+How can I do it?
+
+Solution: pip install -U -r requirements.txt --no-cache-dir --force-reinstall
+
+######################
+
+Problem: I am having a weird error when using cv2.imshow... basically opencv is unable to display an image when calling cv2.imshow. This is due to having open-cv and open-cv-headless versions in 
+conflict with each other. How can I solve it?
+
+Solution: pip install opencv-python --force-reinstall --no-cache-dir
+
+
