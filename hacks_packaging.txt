@@ -1,0 +1,89 @@
+Question: In the context of building a python package, what does mean source distribution or sdist?
+
+Answer: A distribution format (usually generated using python setup.py sdist) that provides metadata and the essential source files needed for installing by a tool like pip, or for generating a Built 
+Distribution. The source distribution is a tar archive of all the files needed to build and install the package.
+
+#########################################################
+
+Question ...so what is a built distribution a.k.a distribution package?
+
+Answer: A versioned archive file that contains Python packages, modules, and other resource files that are used to distribute a Release. The archive file is what an end-user will download from the internet and 
+install.
+
+A distribution package is more commonly referred to with the single words “package” or “distribution.
+
+
+#########################################################
+
+Question ...so... what is a release :) ?
+
+Answer: A snapshot of a Project at a particular point in time, denoted by a version identifier, e.g. 1.1.0
+
+
+#########################################################
+
+Question What are the steps to create a package and then upload it to pypi, so that anyone on the internet can install it?
+
+Answer: 1) Once you have your code ready, you want to make sure the repo structure is adequate: 
+
+	- A root directory which has the name of the repository you are working
+	- tests directory with __init__.py that includes all functionality to ensure the code works as expected
+	- A package directory that encapsulates the functionality prodivided by the package
+	- A docs directory that allows to create a documentation page to explain how the package works
+	- README.md file that contains a description of the repository. It usually describes how to instally, how to contribute, how is the structure of the repository of the repository...etc
+	- CHANGELOG.md file that contains all notable historic changes for each version of the project, over time. One good format of CHANGELOG.md can be found here -> https://keepachangelog.com/en/1.0.0/
+	- requirements.txt contains the dependencies needed for the package to work. Keep in mind that you (and should) have requirements for each part of the project that needs separate independent
+	  dependencies. For example, in a ML project you may have a requirements_training.txt for training purposes, you may have a requirements.txt with only the inference capabilites a reduced dependencies, 	   you may have a requirements in the tests directory just to install then when you are running the tests...etc
+	- LICENSE file with the type of license of the repository
+	- .gitignore file to skip all those directories, modules you don't want to track with control version
+	- setup.py module that defines how the package will be build and distributed. Alternatively, you can use pyproject.toml, that tells "frontend" like pip and build what "backend" tool to use to create
+	  distribution package. Among these backend tool, the most used one is setup.
+	  
+2) Next step is to write the setup.py file.
+
+3) ASSUMING YOU ARE WORKING with setup.py, you need to run the following commands:
+
+python -m pip install --upgrade build
+python setup.py build
+
+This will generate a dist directory with the nameofyourfile-version-pythonversion.egg for example:
+
+Microservice_ml_classifier-0.0.0-py3.8.egg
+
+If you want to generate the source distribution of your package you can run:
+
+python setup.py sdist
+
+This will generate another file in the dist directory with the nameofyourfile-version-pythonversion.tar.gz, for example: 
+
+Microservice_ml_classifier-0.0.0.tar.gz
+
+Newer version of pip prefer to use built-distributions (.egg or .whl extensions), but will fall backto source distributions if needed. You should always upload a source distribution and provide built 
+distributions for the platforms your project is compatible with.In this case, our example package is compatible with Python on any platform so only one built distribution is needed.
+
+4) Upload your package to PyPi
+
+python pip install --upgrade twine
+python twine upload dist/*
+
+That's it! Your package is available for anyone to download and use it :) They just need to run
+
+pip install name-of-package
+
+Note: In the step 3) You can also work with pyproject.toml instead of setup.py. The commands are very similars to the ones above. You can check them here -> https://packaging.python.org/en/latest/tutorials/
+packaging-projects/
+
+#########################################################
+
+Question: How should I specify the requirements in requirements.txt?
+
+Answer: A really good starting point to understand how the requirements should be specified and the difference between abstract and concrete dependencies (e.g. dependencies in requirements.txt vs dependencies in setup.py), is to read the following links in this order:
+
+1) https://stackoverflow.com/questions/43658870/requirements-txt-vs-setup-py
+2) https://caremad.io/posts/2013/07/setup-vs-requirement/
+3) https://medium.com/knerd/best-practices-for-python-dependency-management-cc8d1913db82
+4) https://blog.miguelgrinberg.com/post/the-package-dependency-blues
+5) https://towardsdatascience.com/stop-using-pip-freeze-for-your-python-projects-9c37181730f9
+
+
+

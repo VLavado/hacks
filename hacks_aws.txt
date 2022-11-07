@@ -12,3 +12,40 @@ Example with code:
 import boto3
 s3 = boto3.resource('s3')
 s3.Bucket('autogpe-datasets').upload_file('/tmp/hello.txt', 'txt_files/hello.txt')
+
+###################################################
+
+
+Question: What should you use with boto3 library "client" or "resource"?
+
+Answer: You can use both interfaces. They abstract aws API by making calls to it.
+
+The difference is that client is lower level than resource, therefore it is more flexible. On the other hand, it is also slightly harder to use. It generally returns dictionary that you need to parse. client may give you better performance, but it comes with less readable code. 
+
+A big advantage of client, is that it can interact with aws api, in anyway that it allows. This means that sometimes there will be some operations that is not supported by the resource interface.
+
+If you are using resource interface, and
+
+In my opinion, I have seen aws snippets of code that use client and resource almost interchangably. The issue is mainly to keep coherence when you start one or the other.
+
+In case you find you can't perform some operation in the resource interface. You can work around by using meta.client. This will call the client interface of the resource interface as needed.See below:
+
+import boto3
+
+s3_resource = boto3.resource('s3')
+
+#s3_resource.meta.client will allow to call any method that is available in the client inteface
+#An example is generate_presigned_url() thtat will allow a user to acces a bucket for a given 
+#period of time without having aws credentials
+
+s3_resource.meta.client.generate_presingned_url
+
+
+###################################################
+
+
+Question: How can you train with ec2 spot instances, if they might be taken in anytime?
+
+Answer: You save the checkpoint (in an S3 bucket) and then retake the training from there
+
+###################################################

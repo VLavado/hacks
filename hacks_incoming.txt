@@ -1,0 +1,9 @@
+- Concurrence in general -> https://realpython.com/python-concurrency/#how-to-speed-up-an-io-bound-program -> sqs_utils.py in oil_tank_detection
+- Concurrence in particular for writing or appending to lists on a thread-safe manner -> https://superfastpython.com/multithreaded-file-append/ -> report_utils.py in oil_tank_detection
+- Clear summary of ECS Felipe
+- Refresher in feed forward and backwards in deep learning: https://community.deeplearning.ai/t/feedforward-neural-networks-in-depth/98811
+- Use cases with serverless https://www.serverless.com/learn/use-cases/
+- Deploy microservices on AWS ECS with Fargate (Serveless) https://dev.to/aws-builders/deploy-microservices-on-aws-ecs-fargate-serverless-16el
+- Check Felipe CI/CD demo talk
+- Check demo talks about satellite pipeline
+

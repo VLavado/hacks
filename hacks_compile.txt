@@ -1,0 +1,28 @@
+Problem: I hear quite often around my team, the word "compile". In several course I have taken, there are also mentions to the word "compile". I want to understand it very clear, instead of constantly looking for what it means.
+
+Answer: 
+
+Computers can only understand machine code, which is a low-level programming language*, generally being made up entirely of numbers.
+
+Most of the time when people talk about machine code, they refer to it as binary code**.  So we can say that machine code is made out of sequences of ones and zeros
+
+We need to comunicate with computers, so in order to do so, we need to speak their language. But writing machine code is very impractical, so we had to come up with languages that resemble our own language. We call these languages high-level programming languages. Some examples
+are: Python, Ruby, C# or Java.
+
+Now the problem is that computers do not understand these languages directly, so we need a translator that can explain our instructions to the computer. This is how compilers and interpreters*** were born. They are programs that translate the code we write using high-level 
+languages, into machine code.
+
+Compiling means that after we finished writing our code, a compiler (a program) takes our code and looks at it, making sure it has been written acording the rules of the programming language we used (it checks for syntax errors). If no mistakes are found, the code can be 
+effectively translated into machine code and a file containing compiled code is generated.
+
+We hear people saying that the code doesn't compile. This means that while checking the code, the compiler found errors and the translation into machine code wasn't succesful. Usually, the programmer will see some error messages that will help them debug the code. Only after all 
+errors are fixed, the code will compile.
+
+It is important to note that just because the code compiles, that doesn't mean the program works. This is because a compiler can't catch logical errors. It might sound counterintuitive, but think about it like writing an English text with no grammatical errors or typos, so the 
+words are correct on their own, but when read together they make no sense.
+
+(*) Low-level programming languages are languages that sit close to the computer's instruction set. An instruction set is the set of instructions that the processor understands.
+
+(**) Machine code can be represented using other number formats, like hexadecimal. These formats are easier to read by humans but the computer can't understand them, so in the end they also get converted to binary.
+
+(***) Interpreters are also used to translate source code into machine code but they work differently from compilers.

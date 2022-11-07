@@ -1,2 +1,0 @@
-OpenAPI: it is the industry standard for RESTful API or REST API design
-

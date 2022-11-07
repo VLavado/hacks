@@ -8,7 +8,7 @@ Answer:
 
 - Each test case will be implement one or several test methods to perform testing of a particular aspect of code.
 
-- Inside the test methods, we use the assert methods, self.assert ..., to test a particular condition of the code. For example self.assert(1, 2)
+- Inside the test methods, we use the assert methods, self.assert ..., to test a particular condition of the code. For example self.assertEqual(1, 2)
 
 - Test can be numerous, and their setup repititive. To avoid duplicated code, we can implement methods such as setUp() or setUpClass() which the testing framework will automatically call for every 
   single test that we run. 
@@ -69,7 +69,8 @@ class NetTest(unittest.TestCase):
         self.assertTrue(output.size() == (1, self.n_class))
         
 
-In this case we setup a generic class with two attributes: n_class and model. The model attribute is actually the network architecture. The test method test_forward checks that the output size of the forward pass of the network architecture is actually (1, 10).
+In this case we setup a generic class with two attributes: n_class and model. The model attribute is actually the network architecture. The test method test_forward checks that the output size of 
+the forward pass of the network architecture is actually (1, 10).
         
         
         

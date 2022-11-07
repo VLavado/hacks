@@ -518,8 +518,21 @@ git push origin vlc/country_wkt_function
 
 STEP5 -> Merge on dev branch
 
-# IF the build passes the only thing remaining is to get approved by the reviewers of the code. Once this happens the pull request can be merged by clicking on "merge pull request" button. Then, after that the last button is to press "Confirm merge"
+# IF the build passes the only thing remaining is to get approved by the reviewers of the code. Once this happens the pull request can be merged by clicking on "merge pull request" button. Then, 
+# after that the last button is to press "Confirm merge"
 # IF the build DOES NOT pass. You will have to change the code, do some commits and launch the code again.
+
+
+############################################################################################
+
+Question: What does [skip] increase version automatically mean in the context of github commits?
+
+Answer: This simply reflects that there was a increase in the version of the package in the main branch.
+
+One way to set up a ci/cd framework is to trigger certain actions when a pull request goes from dev to main branch. One of this actions, can be, to increase version by modifying the VERSION file.
+
+
+
 
 
         

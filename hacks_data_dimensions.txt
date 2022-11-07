@@ -1,6 +1,6 @@
 Problem description:
 
-Very ofter I need to keep on searching what is the meaning for each dimension according to data type. I want to have all that info in the same place. So here it goes:
+Very ofter I need to search what is the meaning for each dimension according to data type. I want to have all that info in the same place. So here it goes:
 
 Solution:
 
@@ -14,8 +14,30 @@ features == channels
 
 ([batch, height, width, channels])
 
-#####Pil library (Image) ######
+#####OpenCV#####
+
+When using cv2.imread the image comes in the same format as a numpy array
+
+(height, width, channels)
+
+
+#####Pil library (Image), scikit-image, matplotlib ######
 
 (width, height)
 
 Channels come inside the variable information "RGB Image" for example
+
+##### scikit-image, matplotlib ######
+
+(channels, width, height)
+
+
+##### rasterio ######
+
+THe interpretation of a 3-dimension array read from rasterio is:
+
+(bands, rows, columns)
+
+Which can be interpreted as the following equivalent:
+
+(channels, height, width)

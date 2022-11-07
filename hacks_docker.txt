@@ -525,6 +525,22 @@ In general, the easiest is to point to the files you want to copy to be in the d
 
 ############################################
 
+Question: Regarding the question above, how to include files in outside current Dockerfile directory to build a docker image that will use them later on?
+
+Answer: You can use the -f argument to point where Dockerfile is located, and use the current working directory to include all the files you need.
+
+You DockerFile is located in my_projects/oil_tank_detection/inference/Dockerfile.
+
+Let's say you want to include all the files in the oil_tank_detection level, because that directory is outside the docker context you can do:
+
+$cd my_projects/oil_tank_detection
+$docker build --rm -t 966640482611.dkr.ecr.us-west-2.amazonaws.com/piv/oil_tank_detection:inference -f my_projects/oil_tank_detection/inference/Dockerfile
+
+From docker documentation:
+
+When you issue a docker build command, the current working directory is called the build context. By default, the Dockerfile is assumed to be located here, but you can specify a different location 
+with the file flag (-f). Regardless of where the Dockerfile actually lives, all recursive contents of files and directories in the current directory are sent to the Docker daemon as the build 
+context.
 
 
 

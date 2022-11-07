@@ -1,0 +1,150 @@
+Question: What is a generator? How it works? How is related to yield keyword?
+
+Answer: Let's dive first in what are iterables, iterators and iteration
+
+When you create a list, you can read its items one by one. Reading its items one by one is called iteration:
+
+>>> mylist = [1, 2, 3]
+>>> for i in mylist:
+...    print(i)
+1
+2
+3
+
+mylist is an example of an iterable.
+
+Iteration is a process implying iterables (implementing the __iter__() method) and iterators (implementing the __next__() method). Iterables are any objects you can get an iterator from. Iterators 
+are objects that let you iterate on iterables.
+
+mylist is a handy iterable because you can read them as much as you wish, but you store all the values in memory and this is not always what you want when you have a lot of values!!
+
+To tackle that, we have generators:
+
+Generators are iterators, a kind of iterable you can only iterate over once. Generators do not store all the values in memory, they generate the values on the fly:
+
+>>> mygenerator = (x*x for x in range(3))
+>>> for i in mygenerator:
+...    print(i)
+0
+1
+4
+
+It is just the same except you used () instead of []. BUT, you cannot perform for i in mygenerator a second time since generators can only be used once: they calculate 0, then forget about it and 
+calculate 1, and end calculating 4, one by one.
+
+Okey, so how is yield keyword related to generators?
+
+yield is a keyword that is used like return, except the function will return a generator.
+
+
+>>> def create_generator():
+...    mylist = range(3)
+...    for i in mylist:
+...        yield i*i
+...
+>>> mygenerator = create_generator() # create a generator
+>>> print(mygenerator) # mygenerator is an object!
+<generator object create_generator at 0xb7555c34>
+>>> for i in mygenerator:
+...     print(i)
+0
+1
+4
+
+
+This is a toy example, but it's handy when you know your function will return a huge set of values that you will only need to read once.
+
+To master yield, you must understand that when you call the function, the code you have written in the function body does not run. The function only returns the generator object, this is a bit 
+tricky. To actually get the values from yield, you have to iterate over the generator. This is done when executing in the line < for i in mygenerator >
+
+When you run the for loop this is what happens:
+
+The first time the for calls the generator object created from your function, it will run the code in your function from the beginning until it hits yield, then it'll return the first value of the 
+loop. Then, each subsequent call will run another iteration of the loop you have written in the function and return the next value. This will continue until the generator is considered empty, which 
+happens when the function runs without hitting yield. That can be because the loop has come to an end, or because you no longer satisfy an "if/else".
+
+Therefore yield, is like a breakpoint in the generator execution.
+
+This is a critical feature of generators as it pertains to async IO is that they can effectively be stopped and restarted at will. For example, you can break out of iterating over a generator object 
+and then resume iteration on the remaining values later.
+
+This is a fundamental difference between functions and generators! A function is all-or-nothing. Once it starts, it won’t stop until it hits a return, then pushes that value to the caller (the 
+function that calls it). A generator, on the other hand, pauses each time it hits a yield and goes no further. Not only can it push this value to calling stack, but it can keep a hold of its local 
+variables when you resume it by calling next() on it.
+
+
+
+SUM UP:
+
+Generators have the following features:
+
+1) Generators are iterators
+2) Generators are defined using "(i for i in x)" NOT "[i for i in x]"
+3) Generators output values on the fly. They don't store any elements in memory
+
+Yield has the following features:
+
+1) yield returns a generator
+2) when you call a function with yield, the code inside the function does not run, you get the generator
+3) to obtain the values you need to iterate over the generator
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

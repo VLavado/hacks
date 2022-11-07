@@ -32,4 +32,4 @@ MULTIPOLYGON(
 Summary: 
 Each geometry is encoded as a parameter with its geometry type followed by the necessary points to define it, in the space between parenthesis.
 Coordinates are defined by X and Y components separated by spaces, and each pair of coordinates is separated by commas.
-For multipart geometries (MULTIPOINT, MULTILINESTRING and MULTIPOLYGON), each of the individual parts is contained in a parenthesis and separated by commas.
+For multipart geometries (MULTIPOINT, MULTILINESTRING and MULTIPOLYGON), each of the individual parts is contained in a parenthesis and separated by commas.	

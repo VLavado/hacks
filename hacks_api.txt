@@ -15,7 +15,7 @@ An example of a cross-origin request: the front-end JavaScript code served from 
 
 What the FUCK is a REST API?
 
-Solution:
+Solution:Choose Yes, delete.
 
 REST is all about a client-server relationship, where server-side data are made available through representations of data in simple formats, often JSON and XML. These representations for resources, or collections of resources, which are then potentially modifiable, with actions and relationships being made discoverable via a method known as hypermedia. 
 Hypermedia is fundamental to REST, and is essentially just the concept of providing links to other resources.
@@ -79,3 +79,23 @@ REST-based APIs are great for modeling your domain (that is, resources or entiti
 REST is not only CRUD, but things are done through mainly CRUD-based operations. REST will use HTTP methods such as GET, POST, PUT, DELETE, OPTIONS and, hopefully, PATCH to provide semantic meaning for the intention of the action being taken.
 
 RPC, however, would not do that. Most use only GET and POST, with GET being used to fetch information and POST being used for everything else. It is common to see RPC APIs using something like POST /deleteFoo, with a body of { “id”: 1 }, instead of the REST approach, which would be DELETE /foos/1.
+
+#############################################################
+
+Question: What is an OPENAPI?
+
+Answer: OpenAPI is the industry standard for RESTful API or REST API design
+
+#############################################################
+
+Question: What example can I see to understand how an API work to serve a ML model prediction in a EKS (K8s) microservice work?
+
+Answer: https://github.com/Geomni/roof_elements_microservice/blob/main/app/main.py
+
+#############################################################
+
+Question:  What example can I see to understand how an API work to serve a ML model prediction in an ECS microservice work?
+
+Answer: https://github.com/Geomni/roof_elements/tree/Anguita/ecs-inference Note: this a branch that may or may not exist in the future. If not longer exists when you click on it try 
+
+https://github.com/Geomni/roof_elements
